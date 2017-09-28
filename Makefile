@@ -7,7 +7,7 @@ CXXFLAGS = -c -g -O3 -march=native -pthread -std=c++11 $(WARNINGS)
 all: main
 
 main.o: main.cpp common.h UDP_Server.h UDP_Client.h
-	$(CC) $(CXXFLAGS) main.cpp
+	g++ -c -g -O3 -march=native main.cpp -pthread -std=c++11 $(WARNINGS)
 	
 Message.o: Message.cpp Message.h common.h UDP_Server.h UDP_Client.h 
 	$(CC) $(CXXFLAGS) Message.cpp
