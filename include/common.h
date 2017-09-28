@@ -46,6 +46,13 @@
 #include <chrono>
 
 
+typedef struct VM_info{
+    int vm_id;
+    string vm_time_stamp;
+    int vm_status;
+    long vm_heartbeat;
+}VM_info;
+
 
 //Need locks
 extern VM_info membership_list[NUM_VMS];
@@ -66,12 +73,6 @@ extern string time_stamp;
 extern string vm_host[NUM_VMS];
 extern int my_socket_fd;
 
-typedef struct VM_info{
-    int vm_id;
-    string vm_time_stamp;
-    int vm_status;
-    long vm_heartbeat;
-}VM_info;
 
 
 #endif /* common_h */
