@@ -13,21 +13,21 @@
 
 
 VM_info membership_list[NUM_VMS];
-int successors[NUM_SUC] = {-1};
-int predecessors[NUM_PRE] = {-1};
-FILE* log_fp = NULL;
-int my_id = -1;
-string my_id_str = "";
-int my_socket_fd = -1;
+int successors[NUM_SUC];
+int predecessors[NUM_PRE] ;
+FILE* log_fp ;
+int my_id ;
+string my_id_str ;
+int my_socket_fd ;
 std::mutex mem_list_lock;
 std::mutex successors_lock;
 std::mutex predecessors_lock;
 std::mutex log_fp_lock;
 
 
-UDP_Client* my_listener = NULL;
+UDP_Client* my_listener;
 
-string time_stamp = "";
+string time_stamp ;
 
 string vm_hosts[NUM_VMS] =  {
     "fa17-cs425-g13-01.cs.illinois.edu",
@@ -129,11 +129,12 @@ void init_machine(){
             perror("server: socket fail");
             continue;
         }
-        if (bind(my_socket_fd, p->ai_addr, p->ai_addrlen) == -1) {
-            close(my_socket_fd);
-            perror("listener: bind");
-            continue;
-        }
+        bind(my_socket_fd, p->ai_addr, p->ai_addrlen);
+//        if(bind(my_socket_fd, p->ai_addr, p->ai_addrlen) == -1){
+//            close(my_socket_fd);
+//            perror("listener: bind");
+//            continue;
+//        }
         break;
     }
     if(p == NULL){
