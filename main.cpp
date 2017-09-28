@@ -28,23 +28,12 @@ std::mutex log_fp_lock;
 UDP_Client* my_listener;
 
 string time_stamp;
-string vm_hosts[NUM_VMS] = {
-    "fa17-cs425-g13-01.cs.illinois.edu",
-    "fa17-cs425-g13-02.cs.illinois.edu",
-    "fa17-cs425-g13-03.cs.illinois.edu",
-    "fa17-cs425-g13-04.cs.illinois.edu",
-    "fa17-cs425-g13-05.cs.illinois.edu",
-    "fa17-cs425-g13-06.cs.illinois.edu",
-    "fa17-cs425-g13-07.cs.illinois.edu",
-    "fa17-cs425-g13-08.cs.illinois.edu",
-    "fa17-cs425-g13-09.cs.illinois.edu",
-    "fa17-cs425-g13-10.cs.illinois.edu"
-};
+string vm_hosts[NUM_VMS];
 
 void heartbeat_checker_handler();
 void get_membership_list();
 void init_machine();
-void msg_handler_thread(sting msg);
+void msg_handler_thread(string msg);
 void heartbeat_sender_handler();
 void heartbeat_checker_handler();
 
@@ -54,22 +43,23 @@ void get_membership_list(){
     Message my_msg;
     string request_msg = my_msg.create_J_msg();
     bool alive_vms[NUM_VMS] = {false};
-    
+    UDP_Server temp_server;
     while(1){
         cout << "Requesting membership list from VM0...\n";
-        temp_server.send_msg(vm_hosts[0], PORT, request_msg);
-        string r_msg = my_listener.read_msg_non_block(200);
+        temp_server.send_msg(vm_hosts[0], request_msg);
+        string r_msg = my_listener->read_msg_non_block(200);
         if(r_msg.size() == 0){
             continue;
         }
         if((r_msg[0] == 'R') && ((r_msg.size() -2 )%12 ==0)){
             //Can also call my_msg.handler_R_msg();
             int i = 0;
-            while(r_msg[i] != '\n' && i < r_msg.size() && r_msg.size() >2){
+            int vm_num;
+            while(r_msg[i] != '\n' && i < (int)r_msg.size() && r_msg.size() >2){
                 i++;
-                int vm_num = r_msg[i] = '0';
+                vm_num = r_msg[i] - '0';
                 i++;    // skip '.'
-                string vm_st[10];
+                string vm_st('0',10);
                 for(int j = 0; j < 10; j++){
                     vm_st[j] = r_msg[i+j];
                 }
@@ -81,11 +71,11 @@ void get_membership_list(){
             for(int i = 0 ; i < NUM_VMS; i++){
                 if(i != my_id && alive_vms[i] == false){
                     VM_info new_vm = {i, "0", DEAD, 0};
-                    membership_list[vm_num] = new_vm;
+                    membership_list[i] = new_vm;
                 }
                 else if(i == my_id){
                     VM_info new_vm = {i, "0", ALIVE, 0};
-                    membership_list[vm_num] = new_vm;
+                    membership_list[i] = new_vm;
                 }
             }
             break;
@@ -106,7 +96,7 @@ void init_machine(){
     my_id_str = to_string(my_id);
 
     ///Initialize my_socket_fd
-    string host_name = vm_host[my_id];
+    string host_name = vm_hosts[my_id];
     struct addrinfo hints, *servinfo, *p;
     int rv;
     memset(&hints, 0, sizeof hints);
@@ -114,9 +104,8 @@ void init_machine(){
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
     
-    string port_str = to_string(port);
     
-    if ((rv = getaddrinfo(host_name.c_str();,port_str.c_str(), &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(host_name.c_str(),PORT, &hints, &servinfo)) != 0) {
         //        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         perror("getaddrinfo: failed \n");
         exit(1);
@@ -128,8 +117,8 @@ void init_machine(){
             perror("server: socket fail");
             continue;
         }
-        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-            close(sockfd);
+        if (bind(my_socket_fd, p->ai_addr, p->ai_addrlen) == -1) {
+            close(my_socket_fd);
             perror("listener: bind");
             continue;
         }
@@ -155,21 +144,21 @@ void init_machine(){
         get_membership_list();
     }
     else{
-        //Initialize all vms to dead. NEED TO CHANGE LATTER!!
+        //IF VM0, Initialize all vms to dead. NEED TO CHANGE LATTER!!
         for(int i = 1 ; i < NUM_VMS; i++){
-            if(i != my_id && alive_vms[i] == false){
+            if(i != my_id){
                 VM_info new_vm = {i, "0", DEAD, 0};
-                membership_list[vm_num] = new_vm;
+                membership_list[i] = new_vm;
             }
         }
         VM_info new_vm = {1, "0", ALIVE, 0};
-        membership_list[vm_num] = new_vm;
+        membership_list[my_id] = new_vm;
     }
     
     //Get Log file pointer
     string file_name("vm_");
     file_name.push_back((char)(my_id + '0'));
-    log_fp = fopen(file_name, "w");
+    log_fp = fopen(file_name.c_str(), "w");
     
     //Init pre/successor
     for(int i = 0 ; i < NUM_SUC; i++){
@@ -178,8 +167,8 @@ void init_machine(){
     }
 }
 
-void msg_handler_thread(sting msg){
-    Msg msg_handler();
+void msg_handler_thread(string msg){
+    Message msg_handler;
     if(msg[0] == 'H'){
         if(msg.size() != H_MESSAGE_LENGTH)
             return;
@@ -211,12 +200,12 @@ void msg_handler_thread(sting msg){
 void listener_thread_handler(){
     vector<std::thread> thread_vector;
     while(1){
-        string msg = receive_msg();
+        string msg = my_listener->receive_msg();
         if(msg.size() == 0){
             continue;
         }
         std::thread th(msg_handler_thread,msg);
-        thread_vector.push_back(std::move(thr1));
+        thread_vector.push_back(std::move(th));
 //        http://www.cplusplus.com/forum/unices/194352/
         thread_vector.back().join();
     }
@@ -224,14 +213,15 @@ void listener_thread_handler(){
 
 
 void heartbeat_sender_handler(){
-    string msg = create_H_msg();
+    Message my_msg;
+    string msg = my_msg.create_H_msg();
     while(1){
-        UDP_Server sender();
+        UDP_Server sender;
         successors_lock.lock();
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
-            sender.send_msg(vm_hosts[successors[i]], PORT, msg);
-            sender.send_msg(vm_hosts[predecessors[i]], PORT, msg);
+            sender.send_msg(vm_hosts[successors[i]], msg);
+            sender.send_msg(vm_hosts[predecessors[i]], msg);
         }
         predecessors_lock.unlock();
         successors_lock.unlock();
@@ -285,6 +275,22 @@ void heartbeat_checker_handler(){
 
 
 int main(){
+    string vm_hosts_temp[NUM_VMS] =  {
+        "fa17-cs425-g13-01.cs.illinois.edu",
+        "fa17-cs425-g13-02.cs.illinois.edu",
+        "fa17-cs425-g13-03.cs.illinois.edu",
+        "fa17-cs425-g13-04.cs.illinois.edu",
+        "fa17-cs425-g13-05.cs.illinois.edu",
+        "fa17-cs425-g13-06.cs.illinois.edu",
+        "fa17-cs425-g13-07.cs.illinois.edu",
+        "fa17-cs425-g13-08.cs.illinois.edu",
+        "fa17-cs425-g13-09.cs.illinois.edu",
+        "fa17-cs425-g13-10.cs.illinois.edu"
+    };
+    for(int i = 0 ; i < NUM_VMS; i++){
+        vm_hosts[i] = vm_hosts_temp[i];
+    }
+    
     init_machine();
     std::thread listener_thread(listener_thread_handler);
     std::thread heartbeat_sender_thread(heartbeat_sender_handler);

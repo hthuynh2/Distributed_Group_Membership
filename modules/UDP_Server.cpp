@@ -105,8 +105,9 @@ int UDP_Server::send_msg(string dest_host_name, string msg){
         exit(1);
     }
     int buf_idx = 0;
+    int msg_length = (int) msg.size();
     while(msg_length > 0){
-        if((numbyte = sendto(my_socket_fd, (char*)(msg+buf_idx), msg_length-buf_idx, 0,
+        if((numbyte = sendto(my_socket_fd, (char*)(msg.c_str()+buf_idx), msg_length-buf_idx, 0,
                              servinfo->ai_addr, sizeof(*servinfo->ai_addr))) == -1){
             perror("Message: send");
             return -1;

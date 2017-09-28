@@ -96,7 +96,7 @@ void Message::handle_J_msg(string msg){
     mem_list_lock.unlock();
     string r_msg = create_R_msg(vm_list);
     UDP_Server my_sender;
-    my_sender.send_msg(vm_host[sender_id], r_msg.c_str(), (int)r_msg.size());
+    my_sender.send_msg(vm_hosts[sender_id], r_msg);
     
     //Update pre/sucessor
     update_pre_successor();
@@ -112,15 +112,15 @@ void Message::handle_H_msg(string msg){
     
     mem_list_lock.lock();
     cur_time = time (NULL);
-    if(membership_list[sender_id].vm_status == ALIVE && strcmp(sender_st, membership_list[sender_id].vm_time_stamp) == 0){
-        membership_list[sender_id].heartbeat = (long)cur_time;
+    if(membership_list[sender_id].vm_status == ALIVE && strcmp(sender_st.c_str(), membership_list[sender_id].vm_time_stamp.c_str()) == 0){
+        membership_list[sender_id].vm_heartbeat = (long)cur_time;
         mem_list_lock.unlock();
         return;
     }
     else if(membership_list[sender_id].vm_status == DEAD){
-        if(strcmp(vm_time_stamp, sender_st) != 0){  //New node has join //DO I need to check which timestamp is newer?
+        if(strcmp(membership_list[sender_id].vm_time_stamp.c_str(), sender_st.c_str()) != 0){  //New node has join //DO I need to check which timestamp is newer?
             //Should I add it to membership? YES. Add it and update the successor && precessor
-            membership_list[sender_id].heartbeat = 0;
+            membership_list[sender_id].vm_heartbeat = 0;
             membership_list[sender_id].vm_time_stamp = sender_st;
             membership_list[sender_id].vm_status = ALIVE;
             mem_list_lock.unlock();
@@ -178,7 +178,7 @@ void Message::update_pre_successor(){
     //Find all successors that are still alive but not int new successors list
     int idx = 0;
     for(idx = 0; idx < NUM_SUC; idx++){
-        if(successors[idx] > temp_suc[temp_suc.size() -1])
+        if(successors[idx] > temp_suc[NUM_SUC -1])
             break;
     }
     for(int i = idx; i < NUM_SUC; i++){
@@ -199,7 +199,7 @@ void Message::update_pre_successor(){
             break;
     }
     int min_non_neg = temp_pre[idx];
-    for(idx = temp_pre.size()-1; idx >= 0; idx --){
+    for(idx = NUM_PRE-1; idx >= 0; idx --){
         if(predecessors[idx] < min_non_neg){
             break;
         }
