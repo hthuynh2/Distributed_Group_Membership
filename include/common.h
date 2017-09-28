@@ -13,13 +13,15 @@
 #define H_MESSAGE_LENGTH 14
 #define N_MESSAGE_LENGTH 26
 #define L_MESSAGE_LENGTH 26
-
+#define NUM_SUC 2
+#define NUM_PRE 2
 
 #define VM_AND_TIMESTAMP_SIZE 12
 #define ALIVE 1
 #define DEAD 0
 #define HB_TIME 500     //ms
 #define HB_TIMEOUT 2000
+#define NUM_VMS 10
 
 #include <stdio.h>
 #include <iostream>
@@ -45,7 +47,7 @@
 #include <sys/time.h>
 #include <chrono>
 
-
+using namespace std;
 typedef struct VM_info{
     int vm_id;
     string vm_time_stamp;
