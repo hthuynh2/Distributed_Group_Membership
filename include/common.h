@@ -75,7 +75,7 @@ extern std::mutex log_fp_lock;
 extern int my_id;
 extern string my_id_str;
 extern string time_stamp;
-extern string vm_host[NUM_VMS];
+extern string vm_hosts[NUM_VMS];
 extern int my_socket_fd;
 
 

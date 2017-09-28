@@ -28,7 +28,18 @@ std::mutex log_fp_lock;
 UDP_Client* my_listener;
 
 string time_stamp;
-string vm_hosts[NUM_VMS];
+string vm_hosts[NUM_VMS] =  {
+    "fa17-cs425-g13-01.cs.illinois.edu",
+    "fa17-cs425-g13-02.cs.illinois.edu",
+    "fa17-cs425-g13-03.cs.illinois.edu",
+    "fa17-cs425-g13-04.cs.illinois.edu",
+    "fa17-cs425-g13-05.cs.illinois.edu",
+    "fa17-cs425-g13-06.cs.illinois.edu",
+    "fa17-cs425-g13-07.cs.illinois.edu",
+    "fa17-cs425-g13-08.cs.illinois.edu",
+    "fa17-cs425-g13-09.cs.illinois.edu",
+    "fa17-cs425-g13-10.cs.illinois.edu"
+};
 
 void heartbeat_checker_handler();
 void get_membership_list();
@@ -275,21 +286,21 @@ void heartbeat_checker_handler(){
 
 
 int main(){
-    string vm_hosts_temp[NUM_VMS] =  {
-        "fa17-cs425-g13-01.cs.illinois.edu",
-        "fa17-cs425-g13-02.cs.illinois.edu",
-        "fa17-cs425-g13-03.cs.illinois.edu",
-        "fa17-cs425-g13-04.cs.illinois.edu",
-        "fa17-cs425-g13-05.cs.illinois.edu",
-        "fa17-cs425-g13-06.cs.illinois.edu",
-        "fa17-cs425-g13-07.cs.illinois.edu",
-        "fa17-cs425-g13-08.cs.illinois.edu",
-        "fa17-cs425-g13-09.cs.illinois.edu",
-        "fa17-cs425-g13-10.cs.illinois.edu"
-    };
-    for(int i = 0 ; i < NUM_VMS; i++){
-        vm_hosts[i] = vm_hosts_temp[i];
-    }
+//    string vm_hosts_temp[NUM_VMS] =  {
+//        "fa17-cs425-g13-01.cs.illinois.edu",
+//        "fa17-cs425-g13-02.cs.illinois.edu",
+//        "fa17-cs425-g13-03.cs.illinois.edu",
+//        "fa17-cs425-g13-04.cs.illinois.edu",
+//        "fa17-cs425-g13-05.cs.illinois.edu",
+//        "fa17-cs425-g13-06.cs.illinois.edu",
+//        "fa17-cs425-g13-07.cs.illinois.edu",
+//        "fa17-cs425-g13-08.cs.illinois.edu",
+//        "fa17-cs425-g13-09.cs.illinois.edu",
+//        "fa17-cs425-g13-10.cs.illinois.edu"
+//    };
+//    for(int i = 0 ; i < NUM_VMS; i++){
+//        vm_hosts[i] = vm_hosts_temp[i];
+//    }
     
     init_machine();
     std::thread listener_thread(listener_thread_handler);
