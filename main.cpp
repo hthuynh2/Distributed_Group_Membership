@@ -182,6 +182,7 @@ void init_machine(){
 
 void msg_handler_thread(string msg){
     Message msg_handler;
+    cout <<msg;
     if(msg[0] == 'H'){
         if(msg.size() != H_MESSAGE_LENGTH)
             return;
@@ -233,8 +234,12 @@ void heartbeat_sender_handler(){
         successors_lock.lock();
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
-            sender.send_msg(vm_hosts[successors[i]], msg);
-            sender.send_msg(vm_hosts[predecessors[i]], msg);
+            if(i == my_socket_fd)
+                continue;
+            if(successors[i] >= 0)
+                sender.send_msg(vm_hosts[successors[i]], msg);
+            if(predecessors[i] >= 0)
+                sender.send_msg(vm_hosts[predecessors[i]], msg);
         }
         predecessors_lock.unlock();
         successors_lock.unlock();
@@ -257,6 +262,7 @@ void heartbeat_checker_handler(){
                        (membership_list[successors[i]].vm_heartbeat != 0) ){
                         membership_list[successors[i]].vm_status = DEAD;
                         membership_list[successors[i]].vm_heartbeat = 0;
+                        //Update successors
                         //WRITE TO FILE THAT THIS IS DEAD!!
                         //SEND MSG TO OTHER VMS
                     }
@@ -271,6 +277,7 @@ void heartbeat_checker_handler(){
                        (membership_list[predecessors[i]].vm_heartbeat != 0) ){
                         membership_list[predecessors[i]].vm_status = DEAD;
                         membership_list[predecessors[i]].vm_heartbeat = 0;
+                        //Update Precessors
                         //WRITE TO FILE THAT THIS IS DEAD!!
                         //SEND MSG TO OTHER VMS
                     }
@@ -288,23 +295,8 @@ void heartbeat_checker_handler(){
 
 
 int main(){
-//    string vm_hosts_temp[NUM_VMS] =  {
-//        "fa17-cs425-g13-01.cs.illinois.edu",
-//        "fa17-cs425-g13-02.cs.illinois.edu",
-//        "fa17-cs425-g13-03.cs.illinois.edu",
-//        "fa17-cs425-g13-04.cs.illinois.edu",
-//        "fa17-cs425-g13-05.cs.illinois.edu",
-//        "fa17-cs425-g13-06.cs.illinois.edu",
-//        "fa17-cs425-g13-07.cs.illinois.edu",
-//        "fa17-cs425-g13-08.cs.illinois.edu",
-//        "fa17-cs425-g13-09.cs.illinois.edu",
-//        "fa17-cs425-g13-10.cs.illinois.edu"
-//    };
-//    for(int i = 0 ; i < NUM_VMS; i++){
-//        vm_hosts[i] = vm_hosts_temp[i];
-//    }
-    
     init_machine();
+    cout <<"Successfully Initialize\n";
     std::thread listener_thread(listener_thread_handler);
     std::thread heartbeat_sender_thread(heartbeat_sender_handler);
     std::thread heartbeat_checker_thread(heartbeat_checker_handler);

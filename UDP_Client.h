@@ -22,13 +22,16 @@ typedef std::chrono::nanoseconds unit_nanoseconds;
 using namespace std;
 class UDP_Client{
 private:
+    char msg_buf[1024];
+    int msg_buf_idx;
+    queue<string> msg_q;
     
 public:
-//    UDP_Client();
+    UDP_Client();
     string read_msg_non_block(int time_out);
     string receive_msg();
-    int getline_(int fd, char* line);
-
+    void getlines_(int fd);
+    vector<string> buf_to_line(char* buf, int buf_size);
 
 //    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
 

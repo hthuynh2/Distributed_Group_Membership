@@ -59,6 +59,7 @@ void Message::handle_R_msg(string msg){
         membership_list[vm_num].vm_time_stamp  = msg.substr(3+i*12 ,10);
     }
     mem_list_lock.unlock();
+    update_pre_successor();
     return;
 }
 

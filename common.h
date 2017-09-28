@@ -49,6 +49,8 @@
 #include <thread>
 #include <mutex>
 #include <algorithm>
+#include <queue>
+
 
 using namespace std;
 typedef struct VM_info{
