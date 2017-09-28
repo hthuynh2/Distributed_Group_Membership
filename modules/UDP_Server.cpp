@@ -6,7 +6,6 @@
 //
 //
 
-#include <stdio.h>
 #include "UDP_Server.h"
 #define MAX_BUF_LEN 1024
 #define NUM_MONITOR 4
