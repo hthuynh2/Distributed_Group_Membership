@@ -5,13 +5,11 @@
 //  Created by Hieu Huynh on 9/27/17.
 //
 
-#include <stdio.h>
 #include "common.h"
 #include "UDP_Client.h"
 #include "UDP_Server.h"
 #include "Message.h"
-#include <chrono>
-#include <thread>
+
 
 
 VM_info membership_list[NUM_VMS];
