@@ -157,8 +157,10 @@ void init_machine(){
     
     //Init pre/successor
     for(int i = 0 ; i < NUM_SUC; i++){
-        successors[i] = (my_id+i)%NUM_VMS;
-        predecessors[i] = (my_id - i + NUM_VMS)% NUM_VMS;
+        successors[i] = -1;
+        predecessors[i] = -1;
+    //        successors[i] = (my_id+i)%NUM_VMS;
+//        predecessors[i] = (my_id - i + NUM_VMS)% NUM_VMS;
     }
 }
 

@@ -167,12 +167,12 @@ void Message::update_pre_successor(){
         if(target == my_id){
             for(int j = 0 ; j < NUM_SUC - count; j++){
 //                temp_suc[j + count] = (my_id - j - 1)% NUM_VMS;
-                temp_suc[j + count] = -1;
+                temp_pre[j + count] = -1;
             }
             break;
         }
         else if(membership_list[target].vm_status == ALIVE){
-            temp_suc[count] = target;
+            temp_pre[count] = target;
             count++;
         }
     }
@@ -216,6 +216,11 @@ void Message::update_pre_successor(){
     for(int i = 0 ; i < NUM_SUC; i++){
         predecessors[i] = temp_pre[i];
     }
+//    for(int i = 0 ; i < NUM_SUC; i++){
+//        cout << successors[i] <<" ";
+//    }
+//    cout <<"\n";
+    
     predecessors_lock.unlock();
     successors_lock.unlock();
     mem_list_lock.unlock();
