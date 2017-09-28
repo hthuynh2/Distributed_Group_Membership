@@ -21,6 +21,32 @@
 #define HB_TIME 500     //ms
 #define HB_TIMEOUT 2000
 
+#include <stdio.h>
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include "limits.h"
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <sys/time.h>
+#include <chrono>
+
+
+
 //Need locks
 extern VM_info membership_list[NUM_VMS];
 extern int successors[NUM_SUC];

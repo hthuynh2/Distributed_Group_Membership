@@ -7,6 +7,9 @@
 
 #include <stdio.h>
 #include "common.h"
+#include "UDP_Client.h"
+#include "UDP_Server.h"
+#include "Message.h"
 #include <chrono>
 #include <thread>
 

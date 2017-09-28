@@ -8,8 +8,7 @@
 #ifndef Message_h
 #define Message_h
 #define MAX_BUF_SIZE 1024
-#include <string>     // std::string, std::stoi
-
+#include "common.h"
 
 class Message{
 private:

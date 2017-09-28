@@ -23,7 +23,7 @@ int UDP_Client::getline_(int fd, char* line){
     char buf[1024];
     int buf_idx = 0;
     int flag = 0;
-    while(read(fd,&c,1) != 0){
+    while(recv(fd,&c,1,0) != 0){
         buf[buf_idx] = c;
         buf_idx++;
         if(c == '\n'){

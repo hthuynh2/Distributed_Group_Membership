@@ -8,14 +8,16 @@
 
 #ifndef UDP_Client_h
 #define UDP_Client_h
-#include<string>
-#include <chrono>
+#include "common.h"
+
+
 typedef std::chrono::high_resolution_clock clk;
 typedef std::chrono::time_point<clk> timepnt;
 typedef std::chrono::milliseconds unit_milliseconds;
 typedef std::chrono::microseconds unit_microseconds;
 typedef std::chrono::nanoseconds unit_nanoseconds;
 #define MAX_BUF_SIZE 1024
+
 
 using namespace std;
 class UDP_Client{
@@ -25,7 +27,7 @@ public:
 //    UDP_Client();
     int receive_msg(char* buf);
     string read_msg_non_block(int time_out);
-    int getline_(int fd, char* line){
+    int getline_(int fd, char* line);
 
 
 //    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
