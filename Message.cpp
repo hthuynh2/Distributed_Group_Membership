@@ -10,6 +10,7 @@
 
 Message::Message(){
     sender.append(my_id_str);
+    sender.append(".");
     sender.append(time_stamp);
 }
 
@@ -85,7 +86,7 @@ void Message::handle_J_msg(string msg){
             string vm_str;
             vm_str.push_back(membership_list[i].vm_id + '0');
             vm_str.push_back('.');
-            vm_str.append(membership_list[sender_id].vm_time_stamp);
+            vm_str.append(membership_list[i].vm_time_stamp);
             vm_list.push_back(vm_str);
         }
     }

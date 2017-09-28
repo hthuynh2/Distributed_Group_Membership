@@ -54,8 +54,15 @@ void heartbeat_checker_handler();
 void get_membership_list(){
     Message my_msg;
     string request_msg = my_msg.create_J_msg();
-    bool alive_vms[NUM_VMS] = {false};
     UDP_Server temp_server;
+    
+    for(int i = 0 ; i < NUM_VMS; i++){
+        if(i != my_id)
+            membership_list[i] = {i, "0", DEAD, 0};
+        else
+            membership_list[i] = {i, time_stamp, ALIVE, 0};
+    }
+    
     while(1){
         cout << "Requesting membership list from VM0...\n";
         temp_server.send_msg(vm_hosts[0], request_msg);
@@ -64,32 +71,7 @@ void get_membership_list(){
             continue;
         }
         if((r_msg[0] == 'R') && ((r_msg.size() -2 )%12 ==0)){
-            //Can also call my_msg.handler_R_msg();
-            int i = 0;
-            int vm_num;
-            while(r_msg[i] != '\n' && i < (int)r_msg.size() && r_msg.size() >2){
-                i++;
-                vm_num = r_msg[i] - '0';
-                i++;    // skip '.'
-                string vm_st('0',10);
-                for(int j = 0; j < 10; j++){
-                    vm_st[j] = r_msg[i+j];
-                }
-                i += 10;
-                VM_info new_vm = {vm_num, vm_st, ALIVE, 0};
-                membership_list[vm_num] = new_vm;
-                alive_vms[vm_num] = true;
-            }
-            for(int i = 0 ; i < NUM_VMS; i++){
-                if(i != my_id && alive_vms[i] == false){
-                    VM_info new_vm = {i, "0", DEAD, 0};
-                    membership_list[i] = new_vm;
-                }
-                else if(i == my_id){
-                    VM_info new_vm = {i, "0", ALIVE, 0};
-                    membership_list[i] = new_vm;
-                }
-            }
+            my_msg.handle_R_msg(r_msg);
             break;
         }
     }
@@ -164,7 +146,7 @@ void init_machine(){
                 membership_list[i] = new_vm;
             }
         }
-        VM_info new_vm = {1, "0", ALIVE, 0};
+        VM_info new_vm = {0, time_stamp, ALIVE, 0};
         membership_list[my_id] = new_vm;
     }
     
@@ -234,11 +216,11 @@ void heartbeat_sender_handler(){
         successors_lock.lock();
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
-            if(i == my_socket_fd)
+            if(i == my_id)
                 continue;
-            if(successors[i] >= 0)
+            if(successors[i] >= 0 && successors[i] != my_id)
                 sender.send_msg(vm_hosts[successors[i]], msg);
-            if(predecessors[i] >= 0)
+            if(predecessors[i] >= 0 && predecessors[i] != my_id)
                 sender.send_msg(vm_hosts[predecessors[i]], msg);
         }
         predecessors_lock.unlock();
