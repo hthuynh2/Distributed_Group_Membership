@@ -30,23 +30,6 @@ int UDP_Client::getline_(int fd, char* line){
             break;
         }
     }
-    
-    
-//    while(read(fd,&c,1) != 0){
-//        buf[buf_idx] = c;
-//        buf_idx++;
-//        if(c == '\r'){
-//            flag = 1;
-//        }
-//        else if(c == '\n'){
-//            if(flag == 1){
-//                break;
-//            }
-//            else{
-//                flag = 0;
-//            }
-//        }
-//    }
     memcpy(line,buf,buf_idx);
     return buf_idx;
 }
@@ -63,7 +46,10 @@ string UDP_Client::read_msg_non_block(int time_out){
     
     while(1){
         r_fds = r_master;
-        if(select(my_socket_fd+1, &r_fds, NULL, NULL, NULL) == -1){
+        struct timeval t_out;
+        t_out.tv_sec = 0;
+        t_out.tv_usec = time_out*1000;
+        if(select(my_socket_fd+1, &r_fds, NULL, NULL, &t_out) == -1){
             perror("client: select");
             exit(4);
         }
@@ -75,7 +61,7 @@ string UDP_Client::read_msg_non_block(int time_out){
                 return myString;
             }
         }
-        if(std::chrono::duration_cast<unit_milliseconds>(clk::now() - begin).count() >= time_out)
+//        if(std::chrono::duration_cast<unit_milliseconds>(clk::now() - begin).count() >= time_out)
             break;
     }
     string result = "";
