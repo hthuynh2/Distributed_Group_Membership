@@ -91,9 +91,10 @@
 //    return;
 //}
 
-int UDP_Server::send_msg(string dest_host_name, char* msg, int msg_length){
+int UDP_Server::send_msg(string dest_host_name, string msg){
     struct addrinfo hints, *servinfo;
     int rv;
+    int numbyte = 0;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
@@ -110,8 +111,8 @@ int UDP_Server::send_msg(string dest_host_name, char* msg, int msg_length){
             perror("Message: send");
             return -1;
         }
-        buf_idx = numbyte;
-        msg_length -= ret;
+        buf_idx += numbyte;
+        msg_length -= numbyte;
     }
     
     return numbyte;

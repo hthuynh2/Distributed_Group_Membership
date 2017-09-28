@@ -23,7 +23,7 @@ string Message::create_J_msg(){
 string Message::create_R_msg(vector<string> vm_list){
     string msg;
     msg.append("R");
-    for(int i = 0 ; i < vm_list.size(); i++){
+    for(int i = 0 ; i <(int) vm_list.size(); i++){
         msg.append(vm_list[i]);
     }
     msg.append("\n");
@@ -71,8 +71,8 @@ void Message::handle_L_msg(string msg){
 }
 
 void Message::handle_J_msg(string msg){
-    int sender_id = msg[1+i*12] - '0';
-    int sender_st =  msg.substr(3 ,10);
+    int sender_id = msg[1] - '0';
+    string sender_st =  msg.substr(3 ,10);
     vector<string> vm_list;
     
     mem_list_lock.lock();
@@ -86,7 +86,7 @@ void Message::handle_J_msg(string msg){
         }
     }
     //Update membership list
-    if(membership_list[sender_id].vm_status  != ALIVE || strcmp(membership_list[sender_id].vm_time_stamp,sender_st) != 0){
+    if(membership_list[sender_id].vm_status  != ALIVE || strcmp(membership_list[sender_id].vm_time_stamp.c_str(),sender_st.c_str()) != 0){
         membership_list[sender_id].vm_status  = ALIVE;
         membership_list[sender_id].vm_id  = sender_id;
         membership_list[sender_id].vm_time_stamp = sender_st;
@@ -96,7 +96,7 @@ void Message::handle_J_msg(string msg){
     mem_list_lock.unlock();
     string r_msg = create_R_msg(vm_list);
     UDP_Server my_sender;
-    my_sender.send_msg(r_msg);
+    my_sender.send_msg(vm_host[sender_id], r_msg.c_str(), (int)r_msg.size());
     
     //Update pre/sucessor
     update_pre_successor();
@@ -107,7 +107,7 @@ void Message::handle_J_msg(string msg){
 void Message::handle_H_msg(string msg){
     //Need to check if sender is in pre/suc list????
     int sender_id = msg[1] - '0';
-    int sender_st =  msg.substr(3 ,10);
+    string sender_st =  msg.substr(3 ,10);
     time_t cur_time;
     
     mem_list_lock.lock();

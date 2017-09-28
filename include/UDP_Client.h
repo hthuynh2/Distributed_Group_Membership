@@ -25,8 +25,8 @@ private:
     
 public:
 //    UDP_Client();
-    int receive_msg(char* buf);
     string read_msg_non_block(int time_out);
+    string receive_msg();
     int getline_(int fd, char* line);
 
 

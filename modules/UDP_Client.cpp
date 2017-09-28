@@ -67,23 +67,23 @@ string UDP_Client::read_msg_non_block(int time_out){
             perror("client: select");
             exit(4);
         }
-        for(int i = 1 ; i <= max_fd; i++){
+        for(int i = 1 ; i <= my_socket_fd; i++){
             if(FD_ISSET(i, &r_fds)){
                 char buf[MAX_BUF_SIZE];
                 int buf_idx = getline_(i,buf);
-                std::string myString(data, buf_idx);
+                std::string myString(buf, buf_idx);
                 return myString;
             }
         }
         if(std::chrono::duration_cast<unit_milliseconds>(clk::now() - begin).count() >= time_out)
             break;
     }
-    string result = "":
+    string result = "";
     return result;
 }
 
 
-string UDP::receive_msg(){
+string UDP_Client::receive_msg(){
     char buf[1024];
     int numbytes = getline_(my_socket_fd, buf);
     std::string myString(buf, numbytes);

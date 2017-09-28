@@ -57,7 +57,7 @@ void get_membership_list(){
     
     while(1){
         cout << "Requesting membership list from VM0...\n";
-        temp_server.send_msg(vm_hosts[0], PORT, request_msg, request_msg.size());
+        temp_server.send_msg(vm_hosts[0], PORT, request_msg);
         string r_msg = my_listener.read_msg_non_block(200);
         if(r_msg.size() == 0){
             continue;
@@ -230,8 +230,8 @@ void heartbeat_sender_handler(){
         successors_lock.lock();
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
-            sender.send_msg(vm_hosts[successors[i]], PORT, msg, msg.size());
-            sender.send_msg(vm_hosts[predecessors[i]], PORT, msg, msg.size());
+            sender.send_msg(vm_hosts[successors[i]], PORT, msg);
+            sender.send_msg(vm_hosts[predecessors[i]], PORT, msg);
         }
         predecessors_lock.unlock();
         successors_lock.unlock();

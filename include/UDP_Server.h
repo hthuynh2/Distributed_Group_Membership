@@ -8,8 +8,7 @@
 
 #ifndef UDP_Protocol_h
 #define UDP_Protocol_h
-#include <chrono>
-#include <string>
+#include "common.h"
 using namespace std;
 #define NUM_SUC 2
 #define NUM_PRE 2
@@ -28,7 +27,8 @@ public:
 //    UDP_Server(string host_, int port_);
 //    ~UDP_Server();
 
-    int send_msg(string dest_host_name, int dest_port, char* msg, int msg_length);
+    int send_msg(string dest_host_name, string msg);
+
 //    void send_Status_Msg(string dest_host_name, int dest_port, char* msg, int msg_length, int monitors[NUM_MONITOR]);
 //    void send_HeartBeat_Msg(string dest_host_name, int dest_port, char* msg, int msg_length, int monitors[NUM_MONITOR]);
 
