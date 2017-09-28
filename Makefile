@@ -7,7 +7,7 @@ SPACE := $(EMPTY) $(EMPTY)
 CXX = g++
 LD = g++
 WARNINGS = -Wall -Werror -Wfatal-errors -Wextra -pedantic -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable
-CXXFLAGS = -c -g -O3 -march=native -std=c++1z $(LIBRARY_IPATH) $(WARNINGS)
+CXXFLAGS = -c -g -O3 -march=native -std=c++11 $(LIBRARY_IPATH) $(WARNINGS)
 LDFLAGS = $(LIBRARIES) $(LIBRARY_LPATH)
 
 LIBRARY_IPATH = -I$(INCLUDEDIR)
