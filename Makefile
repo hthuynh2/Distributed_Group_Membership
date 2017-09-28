@@ -1,7 +1,7 @@
 OBJS = main.o Message.o UDP_Server.o UDP_Client.o
 CC = g++
 WARNINGS = -Wall -Werror -Wfatal-errors -Wextra -pedantic
-CXXFLAGS = -c -g -O3 -march=native -std=c++11 $(WARNINGS)
+CXXFLAGS = -c -g -O3 -march=native -pthread -std=c++11 $(WARNINGS)
 
 
 all: main
@@ -19,7 +19,7 @@ UDP_Client.o: UDP_Client.cpp UDP_Client.h common.h
 	$(CC) $(CXXFLAGS) UDP_Client.cpp
 	
 main: main.o Message.o UDP_Server.o UDP_Client.o
-	$(CC) -Wall -g $(OBJS) -o main
+	$(CC) -Wall -g $(OBJS) -o machine
 	
 clean:
 	rm -f *.o 
