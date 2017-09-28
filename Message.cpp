@@ -105,7 +105,6 @@ void Message::handle_J_msg(string msg){
     
     //Update pre/sucessor
     update_pre_successor();
-    
     //Send msg to other VMs
 }
 

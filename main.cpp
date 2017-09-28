@@ -207,7 +207,6 @@ void listener_thread_handler(){
     }
 }
 
-
 void heartbeat_sender_handler(){
     Message my_msg;
     string msg = my_msg.create_H_msg();
@@ -216,8 +215,6 @@ void heartbeat_sender_handler(){
         successors_lock.lock();
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
-            if(i == my_id)
-                continue;
             if(successors[i] >= 0 && successors[i] != my_id)
                 sender.send_msg(vm_hosts[successors[i]], msg);
             if(predecessors[i] >= 0 && predecessors[i] != my_id)
