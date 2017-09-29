@@ -22,11 +22,11 @@ string make_time(int time){
     int min = (time % 3600)/60;
     int sec = (time %60);
     ret.append(to_string(hour));
-    ret.push_back('-');
+    ret.push_back(':');
     ret.append(to_string(min));
-    ret.push_back('-');
+    ret.push_back(':');
     ret.append(to_string(sec));
-    ret.append(": ");
+    ret.append(" : ");
     return ret;
 }
 
@@ -46,6 +46,7 @@ void Logger::close_log_file(){
     if(fp != NULL){
         fclose(fp);
     }
+    fp = NULL;
     cout << "File is closed\n";
 }
 
