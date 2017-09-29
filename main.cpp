@@ -308,6 +308,15 @@ void heartbeat_checker_handler(){
     }
 }
 
+void user_input_handler(){
+    while(1){
+        string input;
+        cin >> input;
+        if(strncmp(input.c_str(), "quit", 4) == 0){
+            my_logger.close_log_file();
+        }
+    }
+}
 
 int main(){
     init_machine();
@@ -315,9 +324,13 @@ int main(){
     std::thread listener_thread(listener_thread_handler);
     std::thread heartbeat_sender_thread(heartbeat_sender_handler);
     std::thread heartbeat_checker_thread(heartbeat_checker_handler);
+    std::thread user_input_thread(user_input_handler);
+
+    
     listener_thread.join();
     heartbeat_sender_thread.join();
     heartbeat_checker_thread.join();
+    user_input_thread.join();
     
     return 0;
 }
