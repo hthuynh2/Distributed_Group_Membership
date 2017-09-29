@@ -122,7 +122,7 @@ void Message::handle_H_msg(string msg){
     log_msg.push_back((char) sender_id + '0');
     log_msg.append(sender_st);
     log_msg.append(": ");
-    if(membership_list[sender_id].vm_status == ALIVE){
+	if(membership_list[sender_id].vm_status == ALIVE){
         log_msg.append("ALIVE ");
     }
     log_msg.append("cur st: ");
@@ -134,6 +134,8 @@ void Message::handle_H_msg(string msg){
     fputs(msg.c_str(), log_fp);
     log_fp_lock.unlock();
     
+	cout << log_msg;
+
     
     if(membership_list[sender_id].vm_status == ALIVE && strcmp(sender_st.c_str(), membership_list[sender_id].vm_time_stamp.c_str()) == 0){
         membership_list[sender_id].vm_heartbeat = (long)cur_time;
@@ -255,7 +257,7 @@ void Message::update_pre_successor(){
     log_msg.push_back('\n');
     fputs(log_msg.c_str(), log_fp);
     log_fp_lock.unlock();
-
+cout << log_msg;
     predecessors_lock.unlock();
     successors_lock.unlock();
     mem_list_lock.unlock();

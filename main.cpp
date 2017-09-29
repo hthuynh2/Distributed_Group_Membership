@@ -219,17 +219,24 @@ void heartbeat_sender_handler(){
     Message my_msg;
     string msg = my_msg.create_H_msg();
     while(1){
+	//cout << "123123123";
         UDP_Server sender;
         successors_lock.lock();
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
+		cout << "asdasd" << successors[i] << "\n";
+		cout << "ppppp" << predecessors[i] << "\n";
+		if(successors[i] >=0 )
+			cout << "Successors: VM "<<successors[i] <<"\n";
             if(successors[i] >= 0 && successors[i] != my_id){
                 log_fp_lock.lock();
                 string log_msg("Send msg to successor VM");
                 log_msg.push_back((char)successors[i] + '0');
                 log_msg.append(": ");
                 log_msg.append(msg.c_str());
-                fputs(log_msg.c_str(), log_fp);
+     
+		cout << log_msg;
+	           fputs(log_msg.c_str(), log_fp);
                 log_fp_lock.unlock();
                 sender.send_msg(vm_hosts[successors[i]], msg);
             }
@@ -239,6 +246,8 @@ void heartbeat_sender_handler(){
                 log_msg.push_back((char)successors[i] + '0');
                 log_msg.append(": ");
                 log_msg.append(msg.c_str());
+		cout << log_msg;
+
                 fputs(log_msg.c_str(), log_fp);
                 log_fp_lock.unlock();
                 sender.send_msg(vm_hosts[predecessors[i]], msg);
