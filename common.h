@@ -20,7 +20,7 @@
 #define ALIVE 1
 #define DEAD 0
 #define HB_TIME 500     //ms
-#define HB_TIMEOUT 2000
+#define HB_TIMEOUT 2
 #define NUM_VMS 10
 
 #include <stdio.h>

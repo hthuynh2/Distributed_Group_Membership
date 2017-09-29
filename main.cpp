@@ -231,7 +231,6 @@ void heartbeat_sender_handler(){
             t.push_back('\n');
             cout << t;
             
-            
 //            cout << "Successors: VM "<<successors[i] <<"\n";
             if(successors[i] >= 0 && successors[i] != my_id){
                 log_fp_lock.lock();
