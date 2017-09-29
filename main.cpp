@@ -302,6 +302,8 @@ void heartbeat_checker_handler(){
         predecessors_lock.unlock();
         successors_lock.unlock();
         mem_list_lock.unlock();
+        Message local_msg;
+        local_msg.update_pre_successor();
     }
 }
 
