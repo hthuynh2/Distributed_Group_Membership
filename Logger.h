@@ -13,6 +13,8 @@ using namespace std;
 class Logger{
 private:
     FILE* fp;
+    time_t begin;
+
     
 public:
     Logger();

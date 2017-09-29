@@ -280,6 +280,14 @@ void heartbeat_checker_handler(){
 //                        cout << "Inside HB Checker";
                         membership_list[successors[i]].vm_status = DEAD;
                         membership_list[successors[i]].vm_heartbeat = 0;
+                        
+                        string str("VM");
+                        str.push_back((char)(successors[i] + '0'));
+                        str.append(" Leave.\n");
+                        my_logger_lock.lock();
+                        my_logger.write_to_file(str);
+                        my_logger_lock.unlock();
+                        
                         //Update successors
                         local_msg.update_pre_successor(true);
                         //WRITE TO FILE THAT THIS IS DEAD!!
@@ -294,6 +302,14 @@ void heartbeat_checker_handler(){
 //                        cout << "Inside HB Checker";
                         membership_list[predecessors[i]].vm_status = DEAD;
                         membership_list[predecessors[i]].vm_heartbeat = 0;
+
+                        string str("VM");
+                        str.push_back((char)(successors[i] + '0'));
+                        str.append(" Leave.\n");
+                        my_logger_lock.lock();
+                        my_logger.write_to_file(str);
+                        my_logger_lock.unlock();
+                        
                         local_msg.update_pre_successor(true);
                         //Update Precessors
                         //WRITE TO FILE THAT THIS IS DEAD!!
@@ -328,7 +344,6 @@ int main(){
     std::thread heartbeat_checker_thread(heartbeat_checker_handler);
     std::thread user_input_thread(user_input_handler);
 
-    
     listener_thread.join();
     heartbeat_sender_thread.join();
     heartbeat_checker_thread.join();
