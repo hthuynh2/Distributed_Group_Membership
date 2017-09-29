@@ -169,9 +169,9 @@ void init_machine(){
 void msg_handler_thread(string msg){
     Message msg_handler;
 //    cout <<msg;
-    my_logger_lock.lock();
-    my_logger.write_to_file(msg);
-    my_logger_lock.unlock();
+//    my_logger_lock.lock();
+//    my_logger.write_to_file(msg);
+//    my_logger_lock.unlock();
 
     if(msg[0] == 'H'){
         if(msg.size() != H_MESSAGE_LENGTH)
