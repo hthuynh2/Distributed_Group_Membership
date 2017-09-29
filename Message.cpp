@@ -51,7 +51,6 @@ string Message::create_H_msg(){
 
 void Message::handle_R_msg(string msg){
     int num_alive_vm = (msg.size() - 2)/12;
-//    cout << "Inside handle_R_msg\n";
     mem_list_lock.lock();
     for(int i = 0 ; i < num_alive_vm; i++){
         int vm_num = msg[1+i*12] - '0';
@@ -111,16 +110,10 @@ void Message::handle_J_msg(string msg){
     log_msg.append(sender_st);
     log_msg.append(" joined.\n");
     
-    //    if(log_fp != NULL)
-    //        fputs(log_msg.c_str(), log_fp);
-    //    log_fp_lock.unlock();
-    //    cout << log_msg;
+
     my_logger_lock.lock();
     my_logger->write_to_file(log_msg);
     my_logger_lock.unlock();
-    
-    
-    ///
     
     //Update pre/sucessor
     update_pre_successor(false);
@@ -132,28 +125,8 @@ void Message::handle_H_msg(string msg){
     int sender_id = msg[1] - '0';
     string sender_st =  msg.substr(3 ,10);
     time_t cur_time;
-//    cout << "Inside H msg\n";
     mem_list_lock.lock();
     cur_time = time (NULL);
-    
-//    string log_msg("Received HB from VM");
-//    log_msg.push_back((char) sender_id + '0');
-//    log_msg.append(sender_st);
-//    log_msg.append(": ");
-//    if(membership_list[sender_id].vm_status == ALIVE){
-//        log_msg.append("ALIVE ");
-//    }
-//    log_msg.append("cur st: ");
-//
-//    log_msg.append(membership_list[sender_id].vm_time_stamp);
-//    log_msg.push_back(' ');
-//    log_msg.append(to_string(membership_list[sender_id].vm_heartbeat));
-//    log_msg.push_back('\n');
-
-//    my_logger_lock.lock();
-//    my_logger.write_to_file(log_msg);
-//    my_logger_lock.unlock();
-
     
     if(membership_list[sender_id].vm_status == ALIVE && strcmp(sender_st.c_str(), membership_list[sender_id].vm_time_stamp.c_str()) == 0){
         membership_list[sender_id].vm_heartbeat = (long)cur_time;
@@ -193,14 +166,12 @@ void Message::update_pre_successor(bool haveLock){
 
     int temp_suc[NUM_SUC];
     int temp_pre[NUM_PRE];
-//    cout << "Inside update pre_suc\n";
     int count = 0;
     //update successor
     for(int i = 0 ; i < NUM_VMS && count < NUM_SUC; i++){
         int target = (i + my_id + 1)% NUM_VMS;
         if(target == my_id){
             for(int j = 0 ; j < NUM_SUC - count; j++){
-//                temp_suc[j + count] = (my_id + j +1) % NUM_VMS;
                 temp_suc[j + count] = -1;
             }
             break;
@@ -215,7 +186,6 @@ void Message::update_pre_successor(bool haveLock){
         int target = (my_id - 1 - i + NUM_VMS)% NUM_VMS;
         if(target == my_id){
             for(int j = 0 ; j < NUM_SUC - count; j++){
-//                temp_suc[j + count] = (my_id - j - 1)% NUM_VMS;
                 temp_pre[j + count] = -1;
             }
             break;
@@ -265,28 +235,20 @@ void Message::update_pre_successor(bool haveLock){
     for(int i = 0 ; i < NUM_SUC; i++){
         predecessors[i] = temp_pre[i];
     }
-//    for(int i = 0 ; i < NUM_SUC; i++){
-//        cout << successors[i] <<" ";
-//    }
-//    cout <<"\n";
-    
-//    log_fp_lock.lock();
+
     string log_msg("Sucessors: ");
         for(int i = 0 ; i < NUM_SUC; i++){
             log_msg.append(to_string(successors[i]));
             log_msg.append(" ");
         }
-    log_msg.append("\nPredecessors: ");
+    log_msg.append(" || Predecessors: ");
     
     for(int i = 0 ; i < NUM_SUC; i++){
         log_msg.append(to_string(predecessors[i]));
         log_msg.append(" ");
     }
     log_msg.push_back('\n');
-//    if(log_fp != NULL)
-//        fputs(log_msg.c_str(), log_fp);
-//    log_fp_lock.unlock();
-//    cout << log_msg;
+    
     my_logger_lock.lock();
     my_logger->write_to_file(log_msg);
     my_logger_lock.unlock();
@@ -299,46 +261,6 @@ void Message::update_pre_successor(bool haveLock){
 }
 
 
-
-
-
-
-//    char msg[MAX_BUF_LEN];
-//    //create heartbeat msg
-//    time_t seconds;
-//    seconds = time (NULL);
-//    string st = to_string(seconds);
-//    //    cout << st <<"\n";
-//    msg[0] = 'H'    ;
-//    if(st.size() < 10){
-//        int idx = 10 - st.size();
-//        memset((char*) (msg+1), '0', idx);
-//        memcpy((char*)(msg+ 1 + idx), st.c_str(), st.size());
-//    }
-//    else if (st.size() == 10){
-//        memcpy((char*)(msg+1), st.c_str(), st.size());
-//    }
-//    else{
-//        memcpy((char*)(msg+ 1), (char*)(st.c_str() + (st.size() - 10)) , 10);
-//    }
-//    msg[11] = '.';
-//    if(heartbeat_flag == true)
-//        msg[12] = '1';
-//    else
-//        msg[12] = '0';
-//
-//    heartbeat_flag = !heartbeat_flag;
-//
-//    msg[13] = '\r';
-//    msg[14] = '\n';
-//
-//    for(int i = 0 ; i < NUM_SUC; i++){
-//        send_msg(vm_hosts[successors[i]], PORT, msg, HEART_BEAT_MSG_SIZE);
-//    }
-//    for(int i = 0 ; i < NUM_PRE; i++){
-//        send_msg(vm_hosts[predecessors[i]], PORT, msg, HEART_BEAT_MSG_SIZE);
-//    }
-//    return ;
 
 
 

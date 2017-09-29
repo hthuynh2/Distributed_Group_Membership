@@ -9,9 +9,6 @@
 #include <stdio.h>
 #include "UDP_Client.h"
 
-//UDP_Client::UDP_Client(){
-//    
-//}
 
 UDP_Client::UDP_Client(){
     msg_buf_idx = 0;
@@ -40,7 +37,6 @@ vector<string> UDP_Client::buf_to_line(char* buf, int buf_size){
 void UDP_Client::getlines_(int fd){
     char buf[1024];
     int numbytes;
-//    int flag = 0;
     if((numbytes = recv(fd, (char*)(msg_buf + msg_buf_idx), 1024 - msg_buf_idx, 0)) == -1){
         perror("UDP_Client: recv error\n");
         exit(1);
