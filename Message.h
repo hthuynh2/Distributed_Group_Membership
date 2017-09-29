@@ -30,7 +30,7 @@ public:
     void handle_L_msg(string msg);
     void handle_J_msg(string msg);
     void handle_H_msg(string msg);
-    void update_pre_successor();
+    void update_pre_successor(bool haveLock);
 
 };
 

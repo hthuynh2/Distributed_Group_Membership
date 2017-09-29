@@ -264,6 +264,8 @@ void heartbeat_sender_handler(){
 }
 
 void heartbeat_checker_handler(){
+    Message local_msg;
+
     while(1){
         mem_list_lock.lock();
         successors_lock.lock();
@@ -279,6 +281,7 @@ void heartbeat_checker_handler(){
                         cout << "Inside HB Checker";
                         membership_list[successors[i]].vm_status = DEAD;
                         membership_list[successors[i]].vm_heartbeat = 0;
+                        local_msg.update_pre_successor(true);
                         //Update successors
                         //WRITE TO FILE THAT THIS IS DEAD!!
                         //SEND MSG TO OTHER VMS
@@ -292,6 +295,7 @@ void heartbeat_checker_handler(){
                         cout << "Inside HB Checker";
                         membership_list[predecessors[i]].vm_status = DEAD;
                         membership_list[predecessors[i]].vm_heartbeat = 0;
+                        local_msg.update_pre_successor(true);
                         //Update Precessors
                         //WRITE TO FILE THAT THIS IS DEAD!!
                         //SEND MSG TO OTHER VMS
@@ -302,8 +306,6 @@ void heartbeat_checker_handler(){
         predecessors_lock.unlock();
         successors_lock.unlock();
         mem_list_lock.unlock();
-        Message local_msg;
-        local_msg.update_pre_successor();
     }
 }
 

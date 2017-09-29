@@ -60,7 +60,7 @@ void Message::handle_R_msg(string msg){
         membership_list[vm_num].vm_time_stamp  = msg.substr(3+i*12 ,10);
     }
     mem_list_lock.unlock();
-    update_pre_successor();
+    update_pre_successor(false);
     return;
 }
 
@@ -104,7 +104,7 @@ void Message::handle_J_msg(string msg){
     my_sender.send_msg(vm_hosts[sender_id], r_msg);
     
     //Update pre/sucessor
-    update_pre_successor();
+    update_pre_successor(false);
     //Send msg to other VMs
 }
 
@@ -149,7 +149,7 @@ void Message::handle_H_msg(string msg){
             membership_list[sender_id].vm_time_stamp = sender_st;
             membership_list[sender_id].vm_status = ALIVE;
             mem_list_lock.unlock();
-            update_pre_successor();
+            update_pre_successor(false);
             return;
         }
         else{
@@ -159,10 +159,13 @@ void Message::handle_H_msg(string msg){
     }
 }
 
-void Message::update_pre_successor(){
-    mem_list_lock.lock();
-    successors_lock.lock();
-    predecessors_lock.lock();
+void Message::update_pre_successor(bool haveLock){
+    if(haveLock == false){
+        mem_list_lock.lock();
+        successors_lock.lock();
+        predecessors_lock.lock();
+    }
+
     int temp_suc[NUM_SUC];
     int temp_pre[NUM_PRE];
     cout << "Inside update pre_suc\n";
@@ -257,11 +260,17 @@ void Message::update_pre_successor(){
     log_msg.push_back('\n');
     fputs(log_msg.c_str(), log_fp);
     log_fp_lock.unlock();
-cout << log_msg;
-    predecessors_lock.unlock();
-    successors_lock.unlock();
-    mem_list_lock.unlock();
+    cout << log_msg;
+    
+    if(haveLock == false){
+        predecessors_lock.unlock();
+        successors_lock.unlock();
+        mem_list_lock.unlock();
+    }
 }
+
+
+
 
 
 
