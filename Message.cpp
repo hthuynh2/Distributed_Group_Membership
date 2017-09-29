@@ -51,7 +51,7 @@ string Message::create_H_msg(){
 
 void Message::handle_R_msg(string msg){
     int num_alive_vm = (msg.size() - 2)/12;
-    
+    cout << "Inside handle_R_msg\n";
     mem_list_lock.lock();
     for(int i = 0 ; i < num_alive_vm; i++){
         int vm_num = msg[1+i*12] - '0';
@@ -113,7 +113,7 @@ void Message::handle_H_msg(string msg){
     int sender_id = msg[1] - '0';
     string sender_st =  msg.substr(3 ,10);
     time_t cur_time;
-    
+    cout << "Inside H msg\n";
     mem_list_lock.lock();
     cur_time = time (NULL);
     
@@ -163,7 +163,7 @@ void Message::update_pre_successor(){
     predecessors_lock.lock();
     int temp_suc[NUM_SUC];
     int temp_pre[NUM_PRE];
-    
+    cout << "Inside update pre_suc\n";
     int count = 0;
     //update successor
     for(int i = 0 ; i < NUM_VMS && count < NUM_SUC; i++){
