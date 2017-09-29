@@ -116,6 +116,25 @@ void Message::handle_H_msg(string msg){
     
     mem_list_lock.lock();
     cur_time = time (NULL);
+    
+    log_fp_lock.lock();
+    string log_msg("Received HB from VM");
+    log_msg.push_back((char) sender_id + '0');
+    log_msg.append(sender_st);
+    log_msg.append(": ");
+    if(membership_list[sender_id].vm_status == ALIVE){
+        log_msg.append("ALIVE ");
+    }
+    log_msg.append("cur st: ");
+    log_msg.append(membership_list[sender_id].vm_time_stamp);
+    log_msg.push_back(' ');
+    log_msg.append(to_string(membership_list[sender_id].vm_heartbeat));
+    log_msg.push_back('\n');
+    
+    fputs(msg.c_str(), log_fp);
+    log_fp_lock.unlock();
+    
+    
     if(membership_list[sender_id].vm_status == ALIVE && strcmp(sender_st.c_str(), membership_list[sender_id].vm_time_stamp.c_str()) == 0){
         membership_list[sender_id].vm_heartbeat = (long)cur_time;
         mem_list_lock.unlock();
@@ -221,6 +240,22 @@ void Message::update_pre_successor(){
 //    }
 //    cout <<"\n";
     
+    log_fp_lock.lock();
+    string log_msg("Sucessors: ");
+        for(int i = 0 ; i < NUM_SUC; i++){
+            log_msg.append(to_string(successors[i]));
+            log_msg.append(" ");
+        }
+    log_msg.append(" || Predecessors: ");
+    
+    for(int i = 0 ; i < NUM_SUC; i++){
+        log_msg.append(to_string(predecessors[i]));
+        log_msg.append(" ");
+    }
+    log_msg.push_back('\n');
+    fputs(log_msg.c_str(), log_fp);
+    log_fp_lock.unlock();
+
     predecessors_lock.unlock();
     successors_lock.unlock();
     mem_list_lock.unlock();

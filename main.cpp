@@ -167,6 +167,10 @@ void init_machine(){
 void msg_handler_thread(string msg){
     Message msg_handler;
     cout <<msg;
+    log_fp_lock.lock();
+    fputs(msg.c_str(), log_fp);
+    log_fp_lock.unlock();
+    
     if(msg[0] == 'H'){
         if(msg.size() != H_MESSAGE_LENGTH)
             return;
@@ -217,10 +221,26 @@ void heartbeat_sender_handler(){
         successors_lock.lock();
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
-            if(successors[i] >= 0 && successors[i] != my_id)
+            if(successors[i] >= 0 && successors[i] != my_id){
+                log_fp_lock.lock();
+                string log_msg("Send msg to successor VM");
+                log_msg.push_back((char)successors[i] + '0');
+                log_msg.append(": ");
+                log_msg.append(msg.c_str());
+                fputs(log_msg.c_str(), log_fp);
+                log_fp_lock.unlock();
                 sender.send_msg(vm_hosts[successors[i]], msg);
-            if(predecessors[i] >= 0 && predecessors[i] != my_id)
+            }
+            if(predecessors[i] >= 0 && predecessors[i] != my_id){
+                log_fp_lock.lock();
+                string log_msg("Send msg to successor VM");
+                log_msg.push_back((char)successors[i] + '0');
+                log_msg.append(": ");
+                log_msg.append(msg.c_str());
+                fputs(log_msg.c_str(), log_fp);
+                log_fp_lock.unlock();
                 sender.send_msg(vm_hosts[predecessors[i]], msg);
+            }
         }
         predecessors_lock.unlock();
         successors_lock.unlock();
