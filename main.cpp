@@ -226,8 +226,8 @@ void heartbeat_sender_handler(){
         successors_lock.lock();
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
-            cout << "Print HB of 0 from sender: "
-            string t(to_string(membership_list[sender_id].vm_heartbeat));
+            cout << "Print HB of 0 from sender: ";
+            string t(to_string(membership_list[successors[i]].vm_heartbeat));
             t.push_back('\n');
             cout << t;
             
@@ -277,14 +277,12 @@ void heartbeat_checker_handler(){
                 if(membership_list[successors[i]].vm_status == ALIVE){
                     if(((cur_time - membership_list[successors[i]].vm_heartbeat) > HB_TIMEOUT) &&
                        (membership_list[successors[i]].vm_heartbeat != 0) ){
+                        cout << "Inside HB Checker";
                         membership_list[successors[i]].vm_status = DEAD;
                         membership_list[successors[i]].vm_heartbeat = 0;
                         //Update successors
                         //WRITE TO FILE THAT THIS IS DEAD!!
                         //SEND MSG TO OTHER VMS
-                    }
-                    else{
-                        membership_list[successors[i]].vm_heartbeat = cur_time;
                     }
                 }
             }
@@ -292,14 +290,12 @@ void heartbeat_checker_handler(){
                 if(membership_list[predecessors[i]].vm_status == ALIVE){
                     if(((cur_time - membership_list[predecessors[i]].vm_heartbeat) > HB_TIMEOUT) &&
                        (membership_list[predecessors[i]].vm_heartbeat != 0) ){
+                        cout << "Inside HB Checker";
                         membership_list[predecessors[i]].vm_status = DEAD;
                         membership_list[predecessors[i]].vm_heartbeat = 0;
                         //Update Precessors
                         //WRITE TO FILE THAT THIS IS DEAD!!
                         //SEND MSG TO OTHER VMS
-                    }
-                    else{
-                        membership_list[predecessors[i]].vm_heartbeat = cur_time;
                     }
                 }
             }
