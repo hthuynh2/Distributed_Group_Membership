@@ -106,7 +106,7 @@ void Message::handle_J_msg(string msg){
     //////
     string log_msg("VM");
     log_msg.push_back((char)(sender_id+'0'));
-    log_msg.append("with time stamp ");
+    log_msg.append(" with time stamp ");
     log_msg.append(sender_st);
     log_msg.append(" joined.\n");
     
@@ -143,18 +143,18 @@ void Message::handle_H_msg(string msg){
             
            string log_msg("VM");
             log_msg.append(to_string(sender_id));
+            log_msg.append(" with time stamp ");
+            log_msg.append(sender_st);
             log_msg.append(" joined.\n");
-                my_logger_lock.lock();
-                my_logger->write_to_file(log_msg);
-                my_logger_lock.unlock();
+            my_logger_lock.lock();
+            my_logger->write_to_file(log_msg);
+            my_logger_lock.unlock();
             update_pre_successor(false);
             return;
         }
-        else{
-            mem_list_lock.unlock();
-            return;
-        }
     }
+    mem_list_lock.unlock();
+    return;
 }
 
 void Message::update_pre_successor(bool haveLock){
@@ -242,7 +242,6 @@ void Message::update_pre_successor(bool haveLock){
             log_msg.append(" ");
         }
     log_msg.append(" || Predecessors: ");
-    
     for(int i = 0 ; i < NUM_SUC; i++){
         log_msg.append(to_string(predecessors[i]));
         log_msg.append(" ");
