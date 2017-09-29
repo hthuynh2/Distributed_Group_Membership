@@ -17,7 +17,6 @@ Logger::Logger(){
 
 string make_time(int time){
     string ret("");
-//    string hour,min,sec;
     int hour = time/3600;
     int min = (time % 3600)/60;
     int sec = (time %60);

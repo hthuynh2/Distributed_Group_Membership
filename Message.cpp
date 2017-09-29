@@ -8,12 +8,18 @@
 #include <stdio.h>
 #include "Message.h"
 
+/*This constructor initialize the string sender used to create msg later
+ */
 Message::Message(){
     sender.append(my_id_str);
     sender.append(".");
     sender.append(time_stamp);
 }
 
+/*This method create a J msg to request membership list from VM0
+ *Input:    None
+ *Return:   message
+ */
 string Message::create_J_msg(){
     string msg;
     msg.append("J");
@@ -21,6 +27,11 @@ string Message::create_J_msg(){
     msg.append("\n");
     return msg;
 }
+
+/*This method create a R msg to Response to the J msg
+ *Input:    vm_list: vector of alive vm
+ *Return:   R msg, which is a list of alive vms
+ */
 string Message::create_R_msg(vector<string> vm_list){
     string msg;
     msg.append("R");
@@ -31,16 +42,26 @@ string Message::create_R_msg(vector<string> vm_list){
     return msg;
 }
 
+/* Need to implement
+ *
+ */
 string Message::create_N_msg(){
     string msg = "";
     return msg;
 }
 
+/* Need to implement
+ *
+ */
 string Message::create_L_msg(){
     string msg = "";
     return msg;
 }
 
+/*This method create a H msg which is Heart Beat msg
+ *Input:    none
+ *Return:   Return heartbeat msg
+ */
 string Message::create_H_msg(){
     string msg("H");
     msg.append(sender);
@@ -48,7 +69,10 @@ string Message::create_H_msg(){
     return msg;
 }
 
-
+/*This method handles R message. It updates membership list and pre/successors based on input R msg
+ *Input:    msg: R msg
+ *Output:   none
+ */
 void Message::handle_R_msg(string msg){
     int num_alive_vm = (msg.size() - 2)/12;
     mem_list_lock.lock();
@@ -63,17 +87,28 @@ void Message::handle_R_msg(string msg){
     return;
 }
 
+/*Need to Implement
+ *
+ *
+ */
 void Message::handle_N_msg(string msg){
     cout << msg;
     return;
 }
 
+/*Need to Implement
+ *
+ *
+ */
 void Message::handle_L_msg(string msg){
     cout << msg;
-
     return;
 }
 
+/*This method handles J message. It creates a R msg and send back back to request VM
+ *Input:    msg: J msg
+ *Output:   none
+ */
 void Message::handle_J_msg(string msg){
     int sender_id = msg[1] - '0';
     string sender_st =  msg.substr(3 ,10);
@@ -102,7 +137,6 @@ void Message::handle_J_msg(string msg){
     UDP_Server my_sender;
     my_sender.send_msg(vm_hosts[sender_id], r_msg);
     
-    
     //////
     string log_msg("VM");
     log_msg.push_back((char)(sender_id+'0'));
@@ -120,6 +154,10 @@ void Message::handle_J_msg(string msg){
     //Send msg to other VMs
 }
 
+/*This method handles H message. It update the heartbeat of pre/successors
+ *Input:    msg: H msg
+ *Output:   none
+ */
 void Message::handle_H_msg(string msg){
     //Need to check if sender is in pre/suc list????
     int sender_id = msg[1] - '0';
@@ -141,7 +179,7 @@ void Message::handle_H_msg(string msg){
             membership_list[sender_id].vm_status = ALIVE;
             mem_list_lock.unlock();
             
-           string log_msg("VM");
+            string log_msg("VM");
             log_msg.append(to_string(sender_id));
             log_msg.append(" with time stamp ");
             log_msg.append(sender_st);
@@ -157,6 +195,10 @@ void Message::handle_H_msg(string msg){
     return;
 }
 
+/*This method update the predecessors and successors of this VM based on alive vms
+ *Input:    haveLock: indicate if already have mem_list_lock, successors_lock, predecessors_lock
+ *Output:   None
+ */
 void Message::update_pre_successor(bool haveLock){
     if(haveLock == false){
         mem_list_lock.lock();
@@ -257,6 +299,8 @@ void Message::update_pre_successor(bool haveLock){
         successors_lock.unlock();
         mem_list_lock.unlock();
     }
+    
+    //NEED TO DO: Need to send msg to old pre/successors that still alive
 }
 
 

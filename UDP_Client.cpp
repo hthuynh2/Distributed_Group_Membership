@@ -9,11 +9,17 @@
 #include <stdio.h>
 #include "UDP_Client.h"
 
-
+/*This constructor sets the msg_buf_idx to 0
+ */
 UDP_Client::UDP_Client(){
     msg_buf_idx = 0;
 }
 
+/* This function parse buffer and return a vector of lines from buffer
+ *Argument:     buf: buffer
+ *              buf_size: buffer size
+ *Return:       vector of lines from buffer
+ */
 vector<string> UDP_Client::buf_to_line(char* buf, int buf_size){
     vector<string> lines;
     string s(buf, buf_size);
@@ -29,10 +35,9 @@ vector<string> UDP_Client::buf_to_line(char* buf, int buf_size){
     return lines;
 }
 
-/* This function read one line from the socketfd
+/* This function read from fd and extract data into messages and store in msg queue
  *Argument:     fd: fd to read from
- *              line: pointer to buffer to store data
- *Return:       Number of byte read
+ *Return:       none
  */
 void UDP_Client::getlines_(int fd){
     char buf[1024];
@@ -62,9 +67,12 @@ void UDP_Client::getlines_(int fd){
     return;
 }
 
-//Read only 1 msg with time out
+/*This function read 1 msg from socket and return after a specified time
+ *Input:    time_out: wait time (in ms)
+ *Return:   Message if exist. Return empty string if timeout and not received any msg.
+*/
 string UDP_Client::read_msg_non_block(int time_out){
-    fd_set r_master, r_fds;            //set of fds
+    fd_set r_master, r_fds;
     FD_ZERO(&r_master);
     FD_ZERO(&r_fds);
     
@@ -103,8 +111,12 @@ string UDP_Client::read_msg_non_block(int time_out){
     return result;
 }
 
-
+/*This function read 1 msg from msg queue. If msg queue is empty, wait until receive msg
+ *Input:    None
+ *Return:   Message
+ */
 string UDP_Client::receive_msg(){
+    //If there is msg in msg_q, return the oldest msg
     if(!msg_q.empty()){
         string ret_msg = msg_q.front();
         msg_q.pop();

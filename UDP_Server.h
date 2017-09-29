@@ -18,7 +18,6 @@ private:
 	   
 public:
     int send_msg(string dest_host_name, string msg);
-
 };
 
 

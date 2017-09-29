@@ -11,6 +11,13 @@
 #define NUM_MONITOR 4
 #define HEART_BEAT_MSG_SIZE 15
 
+
+/*
+ *Send msg to destination host name
+ *Input:    dest_host_name: host name of destination
+ *          msg: message
+ *Return:   Number of bytes sent
+*/
 int UDP_Server::send_msg(string dest_host_name, string msg){
     struct addrinfo hints, *servinfo;
     int rv;
@@ -36,7 +43,7 @@ int UDP_Server::send_msg(string dest_host_name, string msg){
         msg_length -= numbyte;
     }
     
-    return numbyte;
+    return msg_length;
 }
 
 

@@ -49,7 +49,10 @@ void heartbeat_sender_handler();
 void heartbeat_checker_handler();
 
 
-
+/*This function send request to VM0 to get membershiplist, and set the membership list based on response
+ *Input:    None
+ *Return:   None
+ */
 void get_membership_list(){
     Message my_msg;
     string request_msg = my_msg.create_J_msg();
@@ -76,6 +79,10 @@ void get_membership_list(){
     }
 }
 
+/*This function initilize the vm. It sets my_id, my_id_str, my_logger, my_listener, membership list
+ *Input:    None
+ *Return:   None
+ */
 void init_machine(){
     //Init my_id and my_id_str
     char my_addr[512];
@@ -156,6 +163,10 @@ void init_machine(){
     }
 }
 
+/* This function handles msg based on msg types
+ *Input:    msg: message
+ *Return:   None
+ */
 void msg_handler_thread(string msg){
     Message msg_handler;
 
@@ -187,6 +198,10 @@ void msg_handler_thread(string msg){
 //    }
 }
 
+/* This is thread handler to read and handle msg
+ *Input:    None
+ *Return:   None
+ */
 void listener_thread_handler(){
     vector<std::thread> thread_vector;
     while(1){
@@ -201,6 +216,10 @@ void listener_thread_handler(){
     }
 }
 
+/* This is thread handler to send heartbeats to pre/successors
+ *Input:    None
+ *Return:   None
+ */
 void heartbeat_sender_handler(){
     Message my_msg;
     string msg = my_msg.create_H_msg();
@@ -222,6 +241,10 @@ void heartbeat_sender_handler(){
     }
 }
 
+/* This is thread handler to check heartbeats of pre/successors. If timeout, set that node to DEAD, and send msg
+ *Input:    None
+ *Return:   None
+ */
 void heartbeat_checker_handler(){
     Message local_msg;
 
@@ -286,6 +309,10 @@ void heartbeat_checker_handler(){
     }
 }
 
+/* This is thread handler wait for user input to close file before Ctrl+C
+ *Input:    None
+ *Return:   None
+ */
 void user_input_handler(){
     while(1){
         string input;
