@@ -94,6 +94,16 @@ void init_machine(){
     file_name.push_back((char)(my_id + '0'));
     log_fp = fopen(file_name.c_str(), "w");
     
+    
+    
+    //Init pre/successor
+    for(int i = 0 ; i < NUM_SUC; i++){
+        successors[i] = -1;
+        predecessors[i] = -1;
+        //        successors[i] = (my_id+i)%NUM_VMS;
+        //        predecessors[i] = (my_id - i + NUM_VMS)% NUM_VMS;
+    }
+    
     ///Initialize my_socket_fd
     string host_name = vm_hosts[my_id];
     struct addrinfo hints, *servinfo, *p;
@@ -156,14 +166,7 @@ void init_machine(){
     }
     
 
-    
-    //Init pre/successor
-    for(int i = 0 ; i < NUM_SUC; i++){
-        successors[i] = -1;
-        predecessors[i] = -1;
-    //        successors[i] = (my_id+i)%NUM_VMS;
-//        predecessors[i] = (my_id - i + NUM_VMS)% NUM_VMS;
-    }
+
 }
 
 void msg_handler_thread(string msg){
