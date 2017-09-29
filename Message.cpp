@@ -114,7 +114,7 @@ void Message::handle_J_msg(string msg){
     //    log_fp_lock.unlock();
     //    cout << log_msg;
     my_logger_lock.lock();
-    my_logger.write_to_file(log_msg);
+    my_logger->write_to_file(log_msg);
     my_logger_lock.unlock();
     
     
@@ -170,7 +170,7 @@ void Message::handle_H_msg(string msg){
             log_msg.append(to_string(sender_id));
             log_msg.append(" joined.\n");
                 my_logger_lock.lock();
-                my_logger.write_to_file(log_msg);
+                my_logger->write_to_file(log_msg);
                 my_logger_lock.unlock();
             
             update_pre_successor(false);
@@ -287,7 +287,7 @@ void Message::update_pre_successor(bool haveLock){
 //    log_fp_lock.unlock();
 //    cout << log_msg;
     my_logger_lock.lock();
-    my_logger.write_to_file(log_msg);
+    my_logger->write_to_file(log_msg);
     my_logger_lock.unlock();
     
     if(haveLock == false){

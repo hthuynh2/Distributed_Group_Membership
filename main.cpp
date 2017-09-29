@@ -16,7 +16,6 @@
 VM_info membership_list[NUM_VMS];
 int successors[NUM_SUC];
 int predecessors[NUM_PRE] ;
-FILE* log_fp ;
 int my_id ;
 string my_id_str ;
 int my_socket_fd ;
@@ -25,7 +24,7 @@ std::mutex successors_lock;
 std::mutex predecessors_lock;
 std::mutex my_logger_lock;
 
-Logger my_logger;
+Logger* my_logger;
 UDP_Client* my_listener;
 string time_stamp ;
 
@@ -94,7 +93,9 @@ void init_machine(){
 //    file_name.push_back((char)(my_id + '0'));
 //    log_fp = fopen(file_name.c_str(), "w");
     
-    my_logger = Logger();
+    my_logger = new Logger();
+    
+    
     //Init pre/successor
     for(int i = 0 ; i < NUM_SUC; i++){
         successors[i] = -1;
@@ -285,7 +286,7 @@ void heartbeat_checker_handler(){
                         str.push_back((char)(successors[i] + '0'));
                         str.append(" Leave.\n");
                         my_logger_lock.lock();
-                        my_logger.write_to_file(str);
+                        my_logger->write_to_file(str);
                         my_logger_lock.unlock();
                         
                         //Update successors
@@ -307,7 +308,7 @@ void heartbeat_checker_handler(){
                         str.push_back((char)(successors[i] + '0'));
                         str.append(" Leave.\n");
                         my_logger_lock.lock();
-                        my_logger.write_to_file(str);
+                        my_logger->write_to_file(str);
                         my_logger_lock.unlock();
                         
                         local_msg.update_pre_successor(true);
@@ -330,7 +331,7 @@ void user_input_handler(){
         cin >> input;
         if(strncmp(input.c_str(), "quit", 4) == 0){
             my_logger_lock.lock();
-            my_logger.close_log_file();
+            my_logger->close_log_file();
             my_logger_lock.unlock();
         }
     }
