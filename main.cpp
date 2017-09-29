@@ -9,6 +9,7 @@
 #include "UDP_Client.h"
 #include "UDP_Server.h"
 #include "Message.h"
+#include "Logger.h"
 
 
 
@@ -22,11 +23,10 @@ int my_socket_fd ;
 std::mutex mem_list_lock;
 std::mutex successors_lock;
 std::mutex predecessors_lock;
-std::mutex log_fp_lock;
+std::mutex my_logger_lock;
 
-
+Logger my_logger;
 UDP_Client* my_listener;
-
 string time_stamp ;
 
 string vm_hosts[NUM_VMS] =  {
@@ -90,18 +90,15 @@ void init_machine(){
     my_id_str = to_string(my_id);
 
     //Get Log file pointer
-    string file_name("vm_");
-    file_name.push_back((char)(my_id + '0'));
-    log_fp = fopen(file_name.c_str(), "w");
+//    string file_name("vm_");
+//    file_name.push_back((char)(my_id + '0'));
+//    log_fp = fopen(file_name.c_str(), "w");
     
-    
-    
+    my_logger = Logger();
     //Init pre/successor
     for(int i = 0 ; i < NUM_SUC; i++){
         successors[i] = -1;
         predecessors[i] = -1;
-        //        successors[i] = (my_id+i)%NUM_VMS;
-        //        predecessors[i] = (my_id - i + NUM_VMS)% NUM_VMS;
     }
     
     ///Initialize my_socket_fd
@@ -172,10 +169,10 @@ void init_machine(){
 void msg_handler_thread(string msg){
     Message msg_handler;
     cout <<msg;
-    log_fp_lock.lock();
-    fputs(msg.c_str(), log_fp);
-    log_fp_lock.unlock();
-    
+    my_logger_lock.lock();
+    my_logger.write_to_file(msg);
+    my_logger_lock.unlock();
+
     if(msg[0] == 'H'){
         if(msg.size() != H_MESSAGE_LENGTH)
             return;
@@ -233,27 +230,29 @@ void heartbeat_sender_handler(){
             
 //            cout << "Successors: VM "<<successors[i] <<"\n";
             if(successors[i] >= 0 && successors[i] != my_id){
-                log_fp_lock.lock();
                 string log_msg("Send msg to successor VM");
                 log_msg.push_back((char)successors[i] + '0');
                 log_msg.append(": ");
                 log_msg.append(msg.c_str());
-     
-		cout << log_msg;
-	           fputs(log_msg.c_str(), log_fp);
-                log_fp_lock.unlock();
+                cout << log_msg;
+                
+                my_logger_lock.lock();
+                my_logger.write_to_file(log_msg);
+                my_logger_lock.unlock();
+
                 sender.send_msg(vm_hosts[successors[i]], msg);
             }
             if(predecessors[i] >= 0 && predecessors[i] != my_id){
-                log_fp_lock.lock();
                 string log_msg("Send msg to successor VM");
                 log_msg.push_back((char)predecessors[i] + '0');
                 log_msg.append(": ");
                 log_msg.append(msg.c_str());
-		cout << log_msg;
+                cout << log_msg;
 
-                fputs(log_msg.c_str(), log_fp);
-                log_fp_lock.unlock();
+                my_logger_lock.lock();
+                my_logger.write_to_file(msg);
+                my_logger_lock.unlock();
+                
                 sender.send_msg(vm_hosts[predecessors[i]], msg);
             }
         }
@@ -281,8 +280,8 @@ void heartbeat_checker_handler(){
                         cout << "Inside HB Checker";
                         membership_list[successors[i]].vm_status = DEAD;
                         membership_list[successors[i]].vm_heartbeat = 0;
-                        local_msg.update_pre_successor(true);
                         //Update successors
+                        local_msg.update_pre_successor(true);
                         //WRITE TO FILE THAT THIS IS DEAD!!
                         //SEND MSG TO OTHER VMS
                     }

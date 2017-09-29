@@ -117,7 +117,7 @@ void Message::handle_H_msg(string msg){
     mem_list_lock.lock();
     cur_time = time (NULL);
     
-    log_fp_lock.lock();
+//    log_fp_lock.lock();
     string log_msg("Received HB from VM");
     log_msg.push_back((char) sender_id + '0');
     log_msg.append(sender_st);
@@ -126,13 +126,17 @@ void Message::handle_H_msg(string msg){
         log_msg.append("ALIVE ");
     }
     log_msg.append("cur st: ");
+    
     log_msg.append(membership_list[sender_id].vm_time_stamp);
     log_msg.push_back(' ');
     log_msg.append(to_string(membership_list[sender_id].vm_heartbeat));
     log_msg.push_back('\n');
-    
-    fputs(msg.c_str(), log_fp);
-    log_fp_lock.unlock();
+//    if(log_fp != NULL)
+//        fputs(msg.c_str(), log_fp);
+//    log_fp_lock.unlock();
+    my_logger_lock.lock();
+    my_logger.write_to_file(log_msg);
+    my_logger_lock.unlock();
     
 	cout << log_msg;
 
@@ -245,7 +249,7 @@ void Message::update_pre_successor(bool haveLock){
 //    }
 //    cout <<"\n";
     
-    log_fp_lock.lock();
+//    log_fp_lock.lock();
     string log_msg("Sucessors: ");
         for(int i = 0 ; i < NUM_SUC; i++){
             log_msg.append(to_string(successors[i]));
@@ -258,9 +262,13 @@ void Message::update_pre_successor(bool haveLock){
         log_msg.append(" ");
     }
     log_msg.push_back('\n');
-    fputs(log_msg.c_str(), log_fp);
-    log_fp_lock.unlock();
+//    if(log_fp != NULL)
+//        fputs(log_msg.c_str(), log_fp);
+//    log_fp_lock.unlock();
     cout << log_msg;
+    my_logger_lock.lock();
+    my_logger.write_to_file(log_msg);
+    my_logger_lock.unlock();
     
     if(haveLock == false){
         predecessors_lock.unlock();

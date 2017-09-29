@@ -50,6 +50,7 @@
 #include <mutex>
 #include <algorithm>
 #include <queue>
+#include "Logger.h"
 
 
 using namespace std;
@@ -65,11 +66,11 @@ typedef struct VM_info{
 extern VM_info membership_list[NUM_VMS];
 extern int successors[NUM_SUC];
 extern int predecessors[NUM_PRE];
-extern FILE* log_fp;
 extern std::mutex mem_list_lock;
 extern std::mutex successors_lock;
 extern std::mutex predecessors_lock;
-extern std::mutex log_fp_lock;
+extern std::mutex my_logger_lock;
+extern Logger my_logger;
 
 
 //No need lock

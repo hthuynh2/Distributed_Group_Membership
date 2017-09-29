@@ -11,6 +11,7 @@
 #include "common.h"
 #include "UDP_Server.h"
 #include "UDP_Client.h"
+#include "Logger.h"
 class Message{
 private:
     string sender;
