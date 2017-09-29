@@ -70,7 +70,7 @@ extern std::mutex mem_list_lock;
 extern std::mutex successors_lock;
 extern std::mutex predecessors_lock;
 extern std::mutex my_logger_lock;
-extern Logger my_logger;
+extern Logger* my_logger;
 
 
 //No need lock
