@@ -107,6 +107,8 @@ void Message::handle_J_msg(string msg){
     //////
     string log_msg("VM");
     log_msg.push_back((char)(sender_id+'0'));
+    log_msg.append("with time stamp ");
+    log_msg.append(sender_st);
     log_msg.append(" joined.\n");
     
     //    if(log_fp != NULL)
@@ -172,7 +174,6 @@ void Message::handle_H_msg(string msg){
                 my_logger_lock.lock();
                 my_logger->write_to_file(log_msg);
                 my_logger_lock.unlock();
-            
             update_pre_successor(false);
             return;
         }

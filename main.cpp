@@ -284,6 +284,8 @@ void heartbeat_checker_handler(){
                         
                         string str("VM");
                         str.push_back((char)(successors[i] + '0'));
+                        str.append("with time stamp ");
+                        str.append(membership_list[successors[i]].vm_time_stamp);
                         str.append(" Leave.\n");
                         my_logger_lock.lock();
                         my_logger->write_to_file(str);
@@ -306,6 +308,8 @@ void heartbeat_checker_handler(){
 
                         string str("VM");
                         str.push_back((char)(successors[i] + '0'));
+                        str.append("with time stamp ");
+                        str.append(membership_list[predecessors[i]].vm_time_stamp);
                         str.append(" Leave.\n");
                         my_logger_lock.lock();
                         my_logger->write_to_file(str);
