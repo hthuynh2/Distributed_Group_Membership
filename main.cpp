@@ -89,6 +89,11 @@ void init_machine(){
     }
     my_id_str = to_string(my_id);
 
+    //Get Log file pointer
+    string file_name("vm_");
+    file_name.push_back((char)(my_id + '0'));
+    log_fp = fopen(file_name.c_str(), "w");
+    
     ///Initialize my_socket_fd
     string host_name = vm_hosts[my_id];
     struct addrinfo hints, *servinfo, *p;
@@ -150,10 +155,7 @@ void init_machine(){
         membership_list[my_id] = new_vm;
     }
     
-    //Get Log file pointer
-    string file_name("vm_");
-    file_name.push_back((char)(my_id + '0'));
-    log_fp = fopen(file_name.c_str(), "w");
+
     
     //Init pre/successor
     for(int i = 0 ; i < NUM_SUC; i++){
