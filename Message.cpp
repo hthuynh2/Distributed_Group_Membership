@@ -51,7 +51,7 @@ string Message::create_H_msg(){
 
 void Message::handle_R_msg(string msg){
     int num_alive_vm = (msg.size() - 2)/12;
-    cout << "Inside handle_R_msg\n";
+//    cout << "Inside handle_R_msg\n";
     mem_list_lock.lock();
     for(int i = 0 ; i < num_alive_vm; i++){
         int vm_num = msg[1+i*12] - '0';
@@ -103,6 +103,23 @@ void Message::handle_J_msg(string msg){
     UDP_Server my_sender;
     my_sender.send_msg(vm_hosts[sender_id], r_msg);
     
+    
+    //////
+    string log_msg("VM");
+    log_msg.push_back((char)(sender_id+'0'));
+    log_msg.append(" joined.\n");
+    
+    //    if(log_fp != NULL)
+    //        fputs(log_msg.c_str(), log_fp);
+    //    log_fp_lock.unlock();
+    //    cout << log_msg;
+    my_logger_lock.lock();
+    my_logger.write_to_file(log_msg);
+    my_logger_lock.unlock();
+    
+    
+    ///
+    
     //Update pre/sucessor
     update_pre_successor(false);
     //Send msg to other VMs
@@ -113,7 +130,7 @@ void Message::handle_H_msg(string msg){
     int sender_id = msg[1] - '0';
     string sender_st =  msg.substr(3 ,10);
     time_t cur_time;
-    cout << "Inside H msg\n";
+//    cout << "Inside H msg\n";
     mem_list_lock.lock();
     cur_time = time (NULL);
     
@@ -138,7 +155,7 @@ void Message::handle_H_msg(string msg){
     my_logger.write_to_file(log_msg);
     my_logger_lock.unlock();
     
-	cout << log_msg;
+//    cout << log_msg;
 
     
     if(membership_list[sender_id].vm_status == ALIVE && strcmp(sender_st.c_str(), membership_list[sender_id].vm_time_stamp.c_str()) == 0){
@@ -172,7 +189,7 @@ void Message::update_pre_successor(bool haveLock){
 
     int temp_suc[NUM_SUC];
     int temp_pre[NUM_PRE];
-    cout << "Inside update pre_suc\n";
+//    cout << "Inside update pre_suc\n";
     int count = 0;
     //update successor
     for(int i = 0 ; i < NUM_VMS && count < NUM_SUC; i++){
@@ -255,7 +272,7 @@ void Message::update_pre_successor(bool haveLock){
             log_msg.append(to_string(successors[i]));
             log_msg.append(" ");
         }
-    log_msg.append(" || Predecessors: ");
+    log_msg.append("\nPredecessors: ");
     
     for(int i = 0 ; i < NUM_SUC; i++){
         log_msg.append(to_string(predecessors[i]));
@@ -265,7 +282,7 @@ void Message::update_pre_successor(bool haveLock){
 //    if(log_fp != NULL)
 //        fputs(log_msg.c_str(), log_fp);
 //    log_fp_lock.unlock();
-    cout << log_msg;
+//    cout << log_msg;
     my_logger_lock.lock();
     my_logger.write_to_file(log_msg);
     my_logger_lock.unlock();

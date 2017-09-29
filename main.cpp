@@ -168,7 +168,7 @@ void init_machine(){
 
 void msg_handler_thread(string msg){
     Message msg_handler;
-    cout <<msg;
+//    cout <<msg;
     my_logger_lock.lock();
     my_logger.write_to_file(msg);
     my_logger_lock.unlock();
@@ -223,10 +223,10 @@ void heartbeat_sender_handler(){
         successors_lock.lock();
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
-            cout << "Print HB of 0 from sender: ";
-            string t(to_string(membership_list[successors[i]].vm_heartbeat));
-            t.push_back('\n');
-            cout << t;
+//            cout << "Print HB of 0 from sender: ";
+//            string t(to_string(membership_list[successors[i]].vm_heartbeat));
+//            t.push_back('\n');
+//            cout << t;
             
 //            cout << "Successors: VM "<<successors[i] <<"\n";
             if(successors[i] >= 0 && successors[i] != my_id){
@@ -234,7 +234,7 @@ void heartbeat_sender_handler(){
                 log_msg.push_back((char)successors[i] + '0');
                 log_msg.append(": ");
                 log_msg.append(msg.c_str());
-                cout << log_msg;
+//                cout << log_msg;
                 
                 my_logger_lock.lock();
                 my_logger.write_to_file(log_msg);
@@ -247,7 +247,7 @@ void heartbeat_sender_handler(){
                 log_msg.push_back((char)predecessors[i] + '0');
                 log_msg.append(": ");
                 log_msg.append(msg.c_str());
-                cout << log_msg;
+//                cout << log_msg;
 
                 my_logger_lock.lock();
                 my_logger.write_to_file(msg);
@@ -277,7 +277,7 @@ void heartbeat_checker_handler(){
                 if(membership_list[successors[i]].vm_status == ALIVE){
                     if(((cur_time - membership_list[successors[i]].vm_heartbeat) > HB_TIMEOUT) &&
                        (membership_list[successors[i]].vm_heartbeat != 0) ){
-                        cout << "Inside HB Checker";
+//                        cout << "Inside HB Checker";
                         membership_list[successors[i]].vm_status = DEAD;
                         membership_list[successors[i]].vm_heartbeat = 0;
                         //Update successors
@@ -291,7 +291,7 @@ void heartbeat_checker_handler(){
                 if(membership_list[predecessors[i]].vm_status == ALIVE){
                     if(((cur_time - membership_list[predecessors[i]].vm_heartbeat) > HB_TIMEOUT) &&
                        (membership_list[predecessors[i]].vm_heartbeat != 0) ){
-                        cout << "Inside HB Checker";
+//                        cout << "Inside HB Checker";
                         membership_list[predecessors[i]].vm_status = DEAD;
                         membership_list[predecessors[i]].vm_heartbeat = 0;
                         local_msg.update_pre_successor(true);
@@ -313,7 +313,9 @@ void user_input_handler(){
         string input;
         cin >> input;
         if(strncmp(input.c_str(), "quit", 4) == 0){
+            my_logger_lock.lock();
             my_logger.close_log_file();
+            my_logger_lock.unlock();
         }
     }
 }
