@@ -16,7 +16,7 @@ UDP_Server.o: UDP_Server.cpp UDP_Server.h common.h Logger.h
 	$(CC) $(CXXFLAGS) UDP_Server.cpp
 	
 Logger.o: Logger.cpp Logger.h common.h
-	$(CC) $(CXXFLAGS) logger.cpp
+	$(CC) $(CXXFLAGS) Logger.cpp
 	
 UDP_Client.o: UDP_Client.cpp UDP_Client.h common.h Logger.h
 	$(CC) $(CXXFLAGS) UDP_Client.cpp
