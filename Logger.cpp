@@ -15,15 +15,29 @@ Logger::Logger(){
     begin = time (NULL);
 }
 
+string make_time(int time){
+    string ret("");
+//    string hour,min,sec;
+    int hour = time/3600;
+    int min = (time % 3600)/60;
+    int sec = (time %60);
+    ret.append(to_string(hour));
+    ret.push_back('-');
+    ret.append(to_string(min));
+    ret.push_back('-');
+    ret.append(to_string(sec));
+    ret.append(": ");
+    return ret;
+}
+
 void Logger::write_to_file(string msg){
     if(fp == NULL)
         return;
     time_t cur;
     cur = time (NULL);
-    long elapse = cur - begin;
-    string st(to_string(elapse));
+    int elapse = cur - begin;
+    string st = make_time(elapse);
     st.append(msg);
-    
     fputs(st.c_str(), fp);
     return;
 }

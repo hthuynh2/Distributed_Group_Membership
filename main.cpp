@@ -230,28 +230,28 @@ void heartbeat_sender_handler(){
             
 //            cout << "Successors: VM "<<successors[i] <<"\n";
             if(successors[i] >= 0 && successors[i] != my_id){
-                string log_msg("Send msg to successor VM");
-                log_msg.push_back((char)successors[i] + '0');
-                log_msg.append(": ");
-                log_msg.append(msg.c_str());
+//                string log_msg("Send msg to successor VM");
+//                log_msg.push_back((char)successors[i] + '0');
+//                log_msg.append(": ");
+//                log_msg.append(msg.c_str());
 //                cout << log_msg;
                 
-                my_logger_lock.lock();
-                my_logger.write_to_file(log_msg);
-                my_logger_lock.unlock();
+//                my_logger_lock.lock();
+//                my_logger.write_to_file(log_msg);
+//                my_logger_lock.unlock();
 
                 sender.send_msg(vm_hosts[successors[i]], msg);
             }
             if(predecessors[i] >= 0 && predecessors[i] != my_id){
-                string log_msg("Send msg to successor VM");
-                log_msg.push_back((char)predecessors[i] + '0');
-                log_msg.append(": ");
-                log_msg.append(msg.c_str());
+//                string log_msg("Send msg to successor VM");
+//                log_msg.push_back((char)predecessors[i] + '0');
+//                log_msg.append(": ");
+//                log_msg.append(msg.c_str());
 //                cout << log_msg;
 
-                my_logger_lock.lock();
-                my_logger.write_to_file(msg);
-                my_logger_lock.unlock();
+//                my_logger_lock.lock();
+//                my_logger.write_to_file(msg);
+//                my_logger_lock.unlock();
                 
                 sender.send_msg(vm_hosts[predecessors[i]], msg);
             }
