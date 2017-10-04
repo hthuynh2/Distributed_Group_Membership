@@ -40,15 +40,16 @@ void send_gossip_helper(vector<string> msg){
             }
         }
         for(auto it = receivers.begin(); it != receivers.end(); it++){
+            cout << "Send: "<<msg[i] << " to " << vm_hosts[alive_id_array[*it]] <<"\n";
             local_sender.send_msg(vm_hosts[alive_id_array[*it]], msg[i]);
         }
     }
 }
 
 void Gossiper::send_Gossip(string msg){
+    cout << "Gossip: " << msg;
     string g_msg("G");
     vector<string> msg_vector;
-
     g_msg.append(msg);
     g_msg.push_back('\n');
     
