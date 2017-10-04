@@ -187,7 +187,7 @@ void Message::handle_J_msg(string msg){
     //Spread msg to other VMs
     string n_msg = create_N_msg(sender_id, sender_st);
     Gossiper my_gossiper;
-    my_gossiper.send_Gossip(n_msg, false);
+    my_gossiper.send_Gossip(n_msg, true);
     
     //Prepare response msg
     for(int i = 0 ; i < NUM_VMS; i++){

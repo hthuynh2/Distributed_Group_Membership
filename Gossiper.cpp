@@ -15,7 +15,8 @@ Gossiper::Gossiper(){
 
 void send_gossip_helper(vector<string> msg, bool haveLock){
     vector<int> alive_id_array;
-    if(haveLock == false)
+    cout << "here!!\n";
+	if(haveLock == false)
         mem_list_lock.lock();
     for(int i = 0 ; i < NUM_VMS; i++){
         if(membership_list[i].vm_status == ALIVE && membership_list[i].vm_id != my_id){
@@ -24,7 +25,7 @@ void send_gossip_helper(vector<string> msg, bool haveLock){
     }
     if(haveLock == false)
         mem_list_lock.unlock();
-    
+    cout << "helper" << alive_id_array.size()<<"\n";
     if(alive_id_array.size() == 0){
         return;
     }
