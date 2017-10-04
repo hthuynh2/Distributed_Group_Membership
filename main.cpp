@@ -10,7 +10,7 @@
 #include "UDP_Server.h"
 #include "Message.h"
 #include "Logger.h"
-
+#include "Gossiper.h"
 
 
 VM_info membership_list[NUM_VMS];
@@ -170,7 +170,14 @@ void init_machine(){
 void msg_handler_thread(string msg){
     Message msg_handler;
 
-    if(msg[0] == 'H'){
+    if(msg[0] == 'G'){
+        if(msg.size() != G_MESSAGE_LENGTH)
+            return;
+        Gossiper my_gossiper;
+        string new_msg = my_gossiper.get_msg(msg);
+        msg_handler_thread(new_msg);
+    }
+    else if(msg[0] == 'H'){
         if(msg.size() != H_MESSAGE_LENGTH)
             return;
         msg_handler.handle_H_msg(msg);
@@ -210,9 +217,9 @@ void listener_thread_handler(){
             continue;
         }
         std::thread th(msg_handler_thread,msg);
-        thread_vector.push_back(std::move(th));
+//        thread_vector.push_back(std::move(th));
 //        http://www.cplusplus.com/forum/unices/194352/
-        thread_vector.back().join();
+//        thread_vector.back().join();
     }
 }
 
@@ -263,6 +270,7 @@ void heartbeat_checker_handler(){
                         membership_list[successors[i]].vm_status = DEAD;
                         membership_list[successors[i]].vm_heartbeat = 0;
                         
+                        //WRITE TO FILE THAT THIS IS DEAD!!
                         string str("VM");
                         str.push_back((char)(successors[i] + '0'));
                         str.append("with time stamp ");
@@ -274,8 +282,13 @@ void heartbeat_checker_handler(){
                         
                         //Update successors
                         local_msg.update_pre_successor(true);
-                        //WRITE TO FILE THAT THIS IS DEAD!!
+                        
                         //SEND MSG TO OTHER VMS
+                        string l_msg = local_msg.create_L_msg(membership_list[successors[i]].vm_id, membership_list[successors[i]].vm_time_stamp);
+                        
+                        Gossiper my_gossiper;
+                        my_gossiper.send_Gossip(l_msg);
+                        
                     }
                 }
             }
@@ -286,6 +299,7 @@ void heartbeat_checker_handler(){
                         membership_list[predecessors[i]].vm_status = DEAD;
                         membership_list[predecessors[i]].vm_heartbeat = 0;
 
+                        //WRITE TO FILE THAT THIS IS DEAD!!
                         string str("VM");
                         str.push_back((char)(successors[i] + '0'));
                         str.append("with time stamp ");
@@ -295,10 +309,15 @@ void heartbeat_checker_handler(){
                         my_logger->write_to_file(str);
                         my_logger_lock.unlock();
                         
-                        local_msg.update_pre_successor(true);
                         //Update Precessors
-                        //WRITE TO FILE THAT THIS IS DEAD!!
+                        local_msg.update_pre_successor(true);
+                        
                         //SEND MSG TO OTHER VMS
+                        string l_msg = local_msg.create_L_msg(membership_list[predecessors[i]].vm_id, membership_list[predecessors[i]].vm_time_stamp);
+                        
+                        Gossiper my_gossiper;
+                        my_gossiper.send_Gossip(l_msg);
+                        
                     }
                 }
             }

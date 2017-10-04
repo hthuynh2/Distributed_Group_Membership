@@ -42,19 +42,43 @@ string Message::create_R_msg(vector<string> vm_list){
     return msg;
 }
 
+//string create_G_msg(char type, string vm_id_st){
+//    if(type != 'N' && type != 'L'){
+//        string ret_msg("");
+//        return ret_msg;
+//    }
+//    string ret_msg = ("G");
+//    if(type == 'N'){
+//        string n_msg = create_N_msg(vm_id_st);
+//        ret_msg.append()
+//    }
+//    else (type == 'L'){
+//
+//    }
+//}
+
+
 /* Need to implement
  *
  */
-string Message::create_N_msg(){
-    string msg = "";
+string Message::create_N_msg(int id, string ts){
+    string msg("N");
+    msg.push_back((char) (id+'0'));
+    msg.push_back('.');
+    msg.append(ts);
+    msg.push_back('\n');
     return msg;
 }
 
 /* Need to implement
  *
  */
-string Message::create_L_msg(){
-    string msg = "";
+string Message::create_L_msg(int id, string ts){
+    string msg("L");
+    msg.push_back((char) (id+'0'));
+    msg.push_back('.');
+    msg.append(ts);
+    msg.push_back('\n');
     return msg;
 }
 
@@ -82,8 +106,15 @@ void Message::handle_R_msg(string msg){
         membership_list[vm_num].vm_id  = vm_num;
         membership_list[vm_num].vm_time_stamp  = msg.substr(3+i*12 ,10);
     }
+    
+    successors_lock.lock();
+    predecessors_lock.lock();
+    
+    update_pre_successor(true);
+    
+    predecessors_lock.unlock();
+    successors_lock.unlock();
     mem_list_lock.unlock();
-    update_pre_successor(false);
     return;
 }
 
@@ -93,6 +124,22 @@ void Message::handle_R_msg(string msg){
  */
 void Message::handle_N_msg(string msg){
     cout << msg;
+    int sender_id = msg[1] - '0';
+    string sender_st =  msg.substr(3 ,10);
+    mem_list_lock.lock();
+    //Update membership list
+    membership_list[sender_id].vm_status  = ALIVE;
+    membership_list[sender_id].vm_id  = sender_id;
+    membership_list[sender_id].vm_time_stamp = sender_st;
+    
+    successors_lock.lock();
+    predecessors_lock.lock();
+    
+    update_pre_successor(true);
+    
+    predecessors_lock.unlock();
+    successors_lock.unlock();
+    mem_list_lock.unlock();
     return;
 }
 
@@ -102,6 +149,24 @@ void Message::handle_N_msg(string msg){
  */
 void Message::handle_L_msg(string msg){
     cout << msg;
+
+    int sender_id = msg[1] - '0';
+    string sender_st =  msg.substr(3 ,10);
+    mem_list_lock.lock();
+    
+    //Update membership list
+    membership_list[sender_id].vm_status  = DEAD;
+    membership_list[sender_id].vm_id  = sender_id;
+    membership_list[sender_id].vm_time_stamp = sender_st;
+    
+    successors_lock.lock();
+    predecessors_lock.lock();
+    
+    update_pre_successor(true);
+    
+    predecessors_lock.unlock();
+    successors_lock.unlock();
+    mem_list_lock.unlock();
     return;
 }
 
@@ -113,7 +178,6 @@ void Message::handle_J_msg(string msg){
     int sender_id = msg[1] - '0';
     string sender_st =  msg.substr(3 ,10);
     vector<string> vm_list;
-    
     mem_list_lock.lock();
     for(int i = 0 ; i < NUM_VMS; i++){
         if(membership_list[i].vm_status == ALIVE && i != sender_id){
@@ -133,9 +197,7 @@ void Message::handle_J_msg(string msg){
     
     //Update membership_list
     mem_list_lock.unlock();
-    string r_msg = create_R_msg(vm_list);
-    UDP_Server my_sender;
-    my_sender.send_msg(vm_hosts[sender_id], r_msg);
+
     
     //////
     string log_msg("VM");
@@ -151,7 +213,16 @@ void Message::handle_J_msg(string msg){
     
     //Update pre/sucessor
     update_pre_successor(false);
-    //Send msg to other VMs
+    
+    //Spread msg to other VMs
+    string n_msg = create_N_msg(sender_id, sender_st);
+    Gossiper my_gossiper;
+    my_gossiper.send_Gossip(n_msg);
+    
+    //Send Response to requested VM
+    string r_msg = create_R_msg(vm_list);
+    UDP_Server my_sender;
+    my_sender.send_msg(vm_hosts[sender_id], r_msg);
 }
 
 /*This method handles H message. It update the heartbeat of pre/successors
@@ -171,26 +242,26 @@ void Message::handle_H_msg(string msg){
         mem_list_lock.unlock();
         return;
     }
-    else if(membership_list[sender_id].vm_status == DEAD){
-        if(strcmp(membership_list[sender_id].vm_time_stamp.c_str(), sender_st.c_str()) != 0){  //New node has join //DO I need to check which timestamp is newer?
-            //Should I add it to membership? YES. Add it and update the successor && precessor
-            membership_list[sender_id].vm_heartbeat = 0;
-            membership_list[sender_id].vm_time_stamp = sender_st;
-            membership_list[sender_id].vm_status = ALIVE;
-            mem_list_lock.unlock();
-            
-            string log_msg("VM");
-            log_msg.append(to_string(sender_id));
-            log_msg.append(" with time stamp ");
-            log_msg.append(sender_st);
-            log_msg.append(" joined.\n");
-            my_logger_lock.lock();
-            my_logger->write_to_file(log_msg);
-            my_logger_lock.unlock();
-            update_pre_successor(false);
-            return;
-        }
-    }
+//    else if(membership_list[sender_id].vm_status == DEAD){
+//        if(strcmp(membership_list[sender_id].vm_time_stamp.c_str(), sender_st.c_str()) != 0){  //New node has join //DO I need to check which timestamp is newer?
+//            //Should I add it to membership? YES. Add it and update the successor && precessor
+//            membership_list[sender_id].vm_heartbeat = 0;
+//            membership_list[sender_id].vm_time_stamp = sender_st;
+//            membership_list[sender_id].vm_status = ALIVE;
+//            mem_list_lock.unlock();
+//
+//            string log_msg("VM");
+//            log_msg.append(to_string(sender_id));
+//            log_msg.append(" with time stamp ");
+//            log_msg.append(sender_st);
+//            log_msg.append(" joined.\n");
+//            my_logger_lock.lock();
+//            my_logger->write_to_file(log_msg);
+//            my_logger_lock.unlock();
+//            update_pre_successor(false);
+//            return;
+//        }
+//    }
     mem_list_lock.unlock();
     return;
 }
@@ -294,13 +365,16 @@ void Message::update_pre_successor(bool haveLock){
     my_logger->write_to_file(log_msg);
     my_logger_lock.unlock();
     
+    //NEED TO DO: Need to send msg to old pre/successors that still alive
+
+    
+    
     if(haveLock == false){
         predecessors_lock.unlock();
         successors_lock.unlock();
         mem_list_lock.unlock();
     }
     
-    //NEED TO DO: Need to send msg to old pre/successors that still alive
 }
 
 

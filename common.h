@@ -11,8 +11,10 @@
 #define PORT "4390"
 #define J_MESSAGE_LENGTH 14
 #define H_MESSAGE_LENGTH 14
-#define N_MESSAGE_LENGTH 26
-#define L_MESSAGE_LENGTH 26
+#define N_MESSAGE_LENGTH 14
+#define L_MESSAGE_LENGTH 14
+#define G_MESSAGE_LENGTH 16
+
 #define NUM_SUC 2
 #define NUM_PRE 2
 
