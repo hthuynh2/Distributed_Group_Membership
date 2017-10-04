@@ -33,6 +33,7 @@ void send_gossip_helper(vector<string> msg, bool haveLock){
     std::default_random_engine generator;
     std::uniform_int_distribution<int> distribution(0,alive_id_array.size()-1);
     
+    
     UDP_Server local_sender;
     for(int i = 0; i < (int)msg.size(); i++){
         set<int> receivers;
@@ -44,6 +45,15 @@ void send_gossip_helper(vector<string> msg, bool haveLock){
         }
         for(auto it = receivers.begin(); it != receivers.end(); it++){
             cout << "Send: "<<msg[i] << " to " << vm_hosts[alive_id_array[*it]] <<"\n";
+            string str("Send Gossip: ");
+            str.append(msg[i]);
+            str.append(" to ");
+            str.append(vm_hosts[alive_id_array[*it]] );
+            str.append("\n");
+            my_logger_lock.lock();
+            my_logger->write_to_file(str);
+            my_logger_lock.unlock();
+            
             local_sender.send_msg(vm_hosts[alive_id_array[*it]], msg[i]);
         }
     }
@@ -55,6 +65,12 @@ void Gossiper::send_Gossip(string msg, bool haveLock){
     vector<string> msg_vector;
     g_msg.append(msg);
     g_msg.push_back('\n');
+    
+    string str("Prepare GS for msg: ");
+    str.append(msg);
+    my_logger_lock.lock();
+    my_logger->write_to_file(str);
+    my_logger_lock.unlock();
     
     int cur_ttl = init_TTL;
     while(cur_ttl >=0){
@@ -90,6 +106,7 @@ string Gossiper::get_msg(string gossip_msg, bool haveLock){
     if(flag == false){
         return my_msg;
     }
+    
     
     cur_ttl--;
     vector<string> msg_v;

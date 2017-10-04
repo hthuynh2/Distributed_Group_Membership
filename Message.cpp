@@ -111,7 +111,6 @@ void Message::handle_R_msg(string msg){
     
     successors_lock.lock();
     predecessors_lock.lock();
-    
     update_pre_successor(true);
     
     predecessors_lock.unlock();
@@ -217,7 +216,6 @@ void Message::handle_J_msg(string msg){
     log_msg.append(sender_st);
     log_msg.append(" joined.\n");
     
-
     my_logger_lock.lock();
     my_logger->write_to_file(log_msg);
     my_logger_lock.unlock();
@@ -373,8 +371,6 @@ void Message::update_pre_successor(bool haveLock){
     my_logger_lock.unlock();
     
     //NEED TO DO: Need to send msg to old pre/successors that still alive
-
-    
     
     if(haveLock == false){
         predecessors_lock.unlock();

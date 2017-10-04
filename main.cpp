@@ -169,13 +169,30 @@ void init_machine(){
  */
 void msg_handler_thread(string msg){
     Message msg_handler;
-
+    
+    string str("Received: ");
+    str.append(msg);
+    
+    my_logger_lock.lock();
+    my_logger->write_to_file(str);
+    my_logger_lock.unlock();
+    
     if(msg[0] == 'G'){
         if(msg.size() != G_MESSAGE_LENGTH)
             return;
         Gossiper my_gossiper;
         string new_msg = my_gossiper.get_msg(msg, false);
-        msg_handler_thread(new_msg);
+        if(new_msg[0] == 'N'){
+            if(new_msg.size() != N_MESSAGE_LENGTH)
+                return;
+            msg_handler.handle_N_msg(new_msg);
+            
+        }
+        else if(new_msg[0] == 'L'){
+            if(new_msg.size() != L_MESSAGE_LENGTH)
+                return;
+            msg_handler.handle_L_msg(new_msg);
+        }
     }
     else if(msg[0] == 'H'){
         if(msg.size() != H_MESSAGE_LENGTH)
@@ -236,9 +253,26 @@ void heartbeat_sender_handler(){
         predecessors_lock.lock();
         for(int i = 0 ; i < NUM_SUC; i++){
             if(successors[i] >= 0 && successors[i] != my_id){
+                string str("Send HB to VM ");
+                str.append(to_string(successors[i]));
+                str.append(": ");
+                str.append(msg);
+                
+                my_logger_lock.lock();
+                my_logger->write_to_file(str);
+                my_logger_lock.unlock();
+                
                 sender.send_msg(vm_hosts[successors[i]], msg);
             }
             if(predecessors[i] >= 0 && predecessors[i] != my_id){
+                string str("Send HB to VM ");
+                str.append(to_string(successors[i]));
+                str.append(": ");
+                str.append(msg);
+                
+                my_logger_lock.lock();
+                my_logger->write_to_file(str);
+                my_logger_lock.unlock();
                 sender.send_msg(vm_hosts[predecessors[i]], msg);
             }
         }
@@ -265,7 +299,8 @@ void heartbeat_checker_handler(){
         for(int i = 0 ; i < NUM_SUC; i ++){
             if(successors[i] >=0){
                 if(membership_list[successors[i]].vm_status == ALIVE){
-                    if(((cur_time - membership_list[successors[i]].vm_heartbeat) > HB_TIMEOUT) &&
+                    int temp;
+                    if((((temp = cur_time - membership_list[successors[i]].vm_heartbeat)) > HB_TIMEOUT) &&
                        (membership_list[successors[i]].vm_heartbeat != 0) ){
                         membership_list[successors[i]].vm_status = DEAD;
                         membership_list[successors[i]].vm_heartbeat = 0;
@@ -275,7 +310,13 @@ void heartbeat_checker_handler(){
                         str.push_back((char)(successors[i] + '0'));
                         str.append("with time stamp ");
                         str.append(membership_list[successors[i]].vm_time_stamp);
-                        str.append(" Leave.\n");
+                        str.append(" Leave: ");
+                        str.append("Last HB: ");
+                        str.append(to_string(membership_list[successors[i]].vm_heartbeat));
+                        str.append(" : ");
+                        str.append(to_string(temp));
+                        str.push_back('\n');
+                        
                         my_logger_lock.lock();
                         my_logger->write_to_file(str);
                         my_logger_lock.unlock();
@@ -289,23 +330,30 @@ void heartbeat_checker_handler(){
                         string l_msg = local_msg.create_L_msg(fail_vm_id, fail_vm_ts);
                         Gossiper my_gossiper;
                         my_gossiper.send_Gossip(l_msg, true);
-                        
                     }
                 }
             }
             if(predecessors[i] >=0){
                 if(membership_list[predecessors[i]].vm_status == ALIVE){
-                    if(((cur_time - membership_list[predecessors[i]].vm_heartbeat) > HB_TIMEOUT) &&
+                    int temp;
+
+                    if((((temp =cur_time - membership_list[predecessors[i]].vm_heartbeat)) > HB_TIMEOUT) &&
                        (membership_list[predecessors[i]].vm_heartbeat != 0) ){
                         membership_list[predecessors[i]].vm_status = DEAD;
                         membership_list[predecessors[i]].vm_heartbeat = 0;
 
                         //WRITE TO FILE THAT THIS IS DEAD!!
                         string str("VM");
-                        str.push_back((char)(successors[i] + '0'));
+                        str.push_back((char)(predecessors[i] + '0'));
                         str.append("with time stamp ");
                         str.append(membership_list[predecessors[i]].vm_time_stamp);
-                        str.append(" Leave.\n");
+                        str.append(" Leave: ");
+                        str.append("Last HB: ");
+                        str.append(to_string(membership_list[predecessors[i]].vm_heartbeat));
+                        str.append(" : ");
+                        str.append(to_string(temp));
+                        str.push_back('\n');
+                        
                         my_logger_lock.lock();
                         my_logger->write_to_file(str);
                         my_logger_lock.unlock();
@@ -320,7 +368,6 @@ void heartbeat_checker_handler(){
                         string l_msg = local_msg.create_L_msg(fail_vm_id, fail_vm_ts);
                         Gossiper my_gossiper;
                         my_gossiper.send_Gossip(l_msg, true);
-                        
                     }
                 }
             }
