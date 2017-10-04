@@ -149,7 +149,6 @@ void Message::handle_N_msg(string msg){
  */
 void Message::handle_L_msg(string msg){
     cout << msg;
-
     int sender_id = msg[1] - '0';
     string sender_st =  msg.substr(3 ,10);
     mem_list_lock.lock();
