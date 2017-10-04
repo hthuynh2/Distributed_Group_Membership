@@ -18,8 +18,8 @@ private:
     
 public:
     Gossiper();
-    void send_Gossip(string msg);
-    string get_msg(string gossip_msg);
+    void send_Gossip(string msg, bool haveLock);
+    string get_msg(string gossip_msg, bool haveLock);
 
 };
 

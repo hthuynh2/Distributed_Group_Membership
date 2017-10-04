@@ -13,16 +13,18 @@ Gossiper::Gossiper(){
     init_TTL = 2;
 }
 
-void send_gossip_helper(vector<string> msg){
+void send_gossip_helper(vector<string> msg, bool haveLock){
     vector<int> alive_id_array;
-
-    mem_list_lock.lock();
+    if(haveLock == false)
+        mem_list_lock.lock();
     for(int i = 0 ; i < NUM_VMS; i++){
         if(membership_list[i].vm_status == ALIVE && membership_list[i].vm_id != my_id){
             alive_id_array.push_back(membership_list[i].vm_id);
         }
     }
-    mem_list_lock.unlock();
+    if(haveLock == false)
+        mem_list_lock.unlock();
+    
     if(alive_id_array.size() == 0){
         return;
     }
@@ -46,7 +48,7 @@ void send_gossip_helper(vector<string> msg){
     }
 }
 
-void Gossiper::send_Gossip(string msg){
+void Gossiper::send_Gossip(string msg, bool haveLock){
     cout << "Gossip: " << msg;
     string g_msg("G");
     vector<string> msg_vector;
@@ -60,11 +62,11 @@ void Gossiper::send_Gossip(string msg){
         cur_ttl--;
     }
     
-    msg_vector.push_back(g_msg);
-    send_gossip_helper(msg_vector);
+//    msg_vector.push_back(g_msg);
+    send_gossip_helper(msg_vector,haveLock);
 }
 
-string Gossiper::get_msg(string gossip_msg){
+string Gossiper::get_msg(string gossip_msg, bool haveLock){
     int cur_ttl = gossip_msg[gossip_msg.size() - 2];
     
     string my_msg;
@@ -96,7 +98,7 @@ string Gossiper::get_msg(string gossip_msg){
         cur_ttl--;
     }
     
-    send_gossip_helper(msg_v);
+    send_gossip_helper(msg_v, haveLock);
     return my_msg;
 }
 

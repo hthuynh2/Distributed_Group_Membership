@@ -182,13 +182,13 @@ void Message::handle_J_msg(string msg){
     string sender_st =  msg.substr(3 ,10);
     vector<string> vm_list;
     
+    mem_list_lock.lock();
+
     //Spread msg to other VMs
     string n_msg = create_N_msg(sender_id, sender_st);
     Gossiper my_gossiper;
-    my_gossiper.send_Gossip(n_msg);
+    my_gossiper.send_Gossip(n_msg, false);
     
-
-    mem_list_lock.lock();
     //Prepare response msg
     for(int i = 0 ; i < NUM_VMS; i++){
         if(membership_list[i].vm_status == ALIVE && i != sender_id){
@@ -222,7 +222,6 @@ void Message::handle_J_msg(string msg){
     my_logger->write_to_file(log_msg);
     my_logger_lock.unlock();
     
-
     
     //Update pre/sucessor
     update_pre_successor(false);

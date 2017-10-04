@@ -174,7 +174,7 @@ void msg_handler_thread(string msg){
         if(msg.size() != G_MESSAGE_LENGTH)
             return;
         Gossiper my_gossiper;
-        string new_msg = my_gossiper.get_msg(msg);
+        string new_msg = my_gossiper.get_msg(msg, false);
         msg_handler_thread(new_msg);
     }
     else if(msg[0] == 'H'){
@@ -279,15 +279,16 @@ void heartbeat_checker_handler(){
                         my_logger_lock.lock();
                         my_logger->write_to_file(str);
                         my_logger_lock.unlock();
+                        int fail_vm_id = successors[i];
+                        string fail_vm_ts =membership_list[successors[i]].vm_time_stamp;
                         
                         //Update successors
                         local_msg.update_pre_successor(true);
                         
                         //SEND MSG TO OTHER VMS
-                        string l_msg = local_msg.create_L_msg(membership_list[successors[i]].vm_id, membership_list[successors[i]].vm_time_stamp);
-                        
+                        string l_msg = local_msg.create_L_msg(fail_vm_id, fail_vm_ts);
                         Gossiper my_gossiper;
-                        my_gossiper.send_Gossip(l_msg);
+                        my_gossiper.send_Gossip(l_msg, true);
                         
                     }
                 }
@@ -309,14 +310,16 @@ void heartbeat_checker_handler(){
                         my_logger->write_to_file(str);
                         my_logger_lock.unlock();
                         
+                        int fail_vm_id = predecessors[i];
+                        string fail_vm_ts =membership_list[predecessors[i]].vm_time_stamp;
+                        
                         //Update Precessors
                         local_msg.update_pre_successor(true);
                         
                         //SEND MSG TO OTHER VMS
-                        string l_msg = local_msg.create_L_msg(membership_list[predecessors[i]].vm_id, membership_list[predecessors[i]].vm_time_stamp);
-                        
+                        string l_msg = local_msg.create_L_msg(fail_vm_id, fail_vm_ts);
                         Gossiper my_gossiper;
-                        my_gossiper.send_Gossip(l_msg);
+                        my_gossiper.send_Gossip(l_msg, true);
                         
                     }
                 }
