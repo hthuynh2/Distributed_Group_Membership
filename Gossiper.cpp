@@ -23,6 +23,9 @@ void send_gossip_helper(vector<string> msg){
         }
     }
     mem_list_lock.unlock();
+    if(alive_id_array.size() == 0){
+        return;
+    }
     
     std::default_random_engine generator;
     std::uniform_int_distribution<int> distribution(0,alive_id_array.size()-1);
@@ -30,7 +33,7 @@ void send_gossip_helper(vector<string> msg){
     UDP_Server local_sender;
     for(int i = 0; i < (int)msg.size(); i++){
         set<int> receivers;
-        while (receivers.size() != 3) {
+        while (receivers.size() != 3 && receivers.size() < alive_id_array.size()) {
             int temp = distribution(generator);
             if(receivers.find(temp) == receivers.end()){
                 receivers.insert(temp);

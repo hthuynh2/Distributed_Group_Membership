@@ -217,7 +217,7 @@ void listener_thread_handler(){
             continue;
         }
         std::thread th(msg_handler_thread,msg);
-//        thread_vector.push_back(std::move(th));
+        thread_vector.push_back(std::move(th));
 //        http://www.cplusplus.com/forum/unices/194352/
 //        thread_vector.back().join();
     }
