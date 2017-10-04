@@ -98,6 +98,8 @@ string Message::create_H_msg(){
  *Output:   none
  */
 void Message::handle_R_msg(string msg){
+    cout << msg;
+
     int num_alive_vm = (msg.size() - 2)/12;
     mem_list_lock.lock();
     for(int i = 0 ; i < num_alive_vm; i++){
@@ -174,6 +176,8 @@ void Message::handle_L_msg(string msg){
  *Output:   none
  */
 void Message::handle_J_msg(string msg){
+    cout << msg;
+
     int sender_id = msg[1] - '0';
     string sender_st =  msg.substr(3 ,10);
     vector<string> vm_list;
