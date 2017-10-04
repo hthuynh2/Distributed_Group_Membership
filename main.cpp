@@ -266,7 +266,7 @@ void heartbeat_sender_handler(){
             }
             if(predecessors[i] >= 0 && predecessors[i] != my_id){
                 string str("Send HB to VM ");
-                str.append(to_string(successors[i]));
+                str.append(to_string(predecessors[i]));
                 str.append(": ");
                 str.append(msg);
                 
@@ -303,6 +303,8 @@ void heartbeat_checker_handler(){
                     if((((temp = cur_time - membership_list[successors[i]].vm_heartbeat)) > HB_TIMEOUT) &&
                        (membership_list[successors[i]].vm_heartbeat != 0) ){
                         membership_list[successors[i]].vm_status = DEAD;
+                        
+                        int last_hb =  membership_list[successors[i]].vm_heartbeat;
                         membership_list[successors[i]].vm_heartbeat = 0;
                         
                         //WRITE TO FILE THAT THIS IS DEAD!!
@@ -312,7 +314,7 @@ void heartbeat_checker_handler(){
                         str.append(membership_list[successors[i]].vm_time_stamp);
                         str.append(" Leave: ");
                         str.append("Last HB: ");
-                        str.append(to_string(membership_list[successors[i]].vm_heartbeat));
+                        str.append(to_string(last_hb));
                         str.append(" : ");
                         str.append(to_string(temp));
                         str.push_back('\n');
@@ -340,6 +342,11 @@ void heartbeat_checker_handler(){
                     if((((temp =cur_time - membership_list[predecessors[i]].vm_heartbeat)) > HB_TIMEOUT) &&
                        (membership_list[predecessors[i]].vm_heartbeat != 0) ){
                         membership_list[predecessors[i]].vm_status = DEAD;
+                        
+                        
+                        int last_hb =  membership_list[successors[i]].vm_heartbeat;
+
+                        
                         membership_list[predecessors[i]].vm_heartbeat = 0;
 
                         //WRITE TO FILE THAT THIS IS DEAD!!
@@ -349,7 +356,7 @@ void heartbeat_checker_handler(){
                         str.append(membership_list[predecessors[i]].vm_time_stamp);
                         str.append(" Leave: ");
                         str.append("Last HB: ");
-                        str.append(to_string(membership_list[predecessors[i]].vm_heartbeat));
+                        str.append(to_string(last_hb));
                         str.append(" : ");
                         str.append(to_string(temp));
                         str.push_back('\n');
