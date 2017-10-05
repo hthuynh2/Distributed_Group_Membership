@@ -289,7 +289,7 @@ void Message::update_pre_successor(bool haveLock){
     int count = 0;
     unordered_set<int> suc_set;
     
-    
+    //update successor
     int temp_idx = (my_id+1)%NUM_VMS;
     while(temp_idx != my_id && count < NUM_SUC){
         if(membership_list[temp_idx].vm_status == ALIVE){
@@ -300,9 +300,9 @@ void Message::update_pre_successor(bool haveLock){
         temp_idx  = (temp_idx+1)%NUM_VMS;
     }
     
+    //update precessors
     count  = 0;
-    
- temp_idx = (my_id - 1 + NUM_VMS)%NUM_VMS;
+    temp_idx = (my_id - 1 + NUM_VMS)%NUM_VMS;
     while(temp_idx != my_id && count < NUM_PRE){
         if(membership_list[temp_idx].vm_status == ALIVE && suc_set.find(temp_idx) == suc_set.end()){
             temp_pre[count] = temp_idx;
@@ -310,63 +310,8 @@ void Message::update_pre_successor(bool haveLock){
         }
         temp_idx  = (temp_idx+1)%NUM_VMS;
     }
-    
-    //update successor
-//    for(int i = my_id+1 ; i < NUM_VMS && count < NUM_SUC; i++){
-//        int target = (i + my_id + 1)% NUM_VMS;
-//        if(target == my_id){
-//            for(int j = 0 ; j < NUM_SUC - count; j++){
-//                temp_suc[j + count] = -1;
-//            }
-//            break;
-//        }
-//        else if(membership_list[target].vm_status == ALIVE){
-//            suc_set.insert(target);
-//            temp_suc[count] = target;
-//            count++;
-//        }
-//    }
-//
-//
-//
-    
-    
-    
-    
-    //update successor
-//    for(int i = 0 ; i < NUM_VMS && count < NUM_SUC; i++){
-//        int target = (i + my_id + 1)% NUM_VMS;
-//        if(target == my_id){
-//            for(int j = 0 ; j < NUM_SUC - count; j++){
-//                temp_suc[j + count] = -1;
-//            }
-//            break;
-//        }
-//        else if(membership_list[target].vm_status == ALIVE){
-//            suc_set.insert(target);
-//            temp_suc[count] = target;
-//            count++;
-//        }
-//    }
-    
-//    count = 0;
-//    for(int i = 0 ; i < NUM_VMS && count < NUM_PRE; i++){
-//        int target = (my_id - 1 - i + NUM_VMS)% NUM_VMS;
-//        if(target == my_id){
-////            for(int j = 0 ; j < NUM_SUC - count; j++){
-////                temp_pre[j + count] = -1;
-////            }
-//            break;
-//        }
-//        else if(membership_list[target].vm_status == ALIVE){
-//            if(suc_set.find(target) == suc_set.end()){
-//                temp_pre[count] = target;
-////                count++;
-//            }
-//        }
-//    }
-//
-//
+
+    //Set HB of old pre/successors that still ALIVE to 0
     for(int i = 0; i < NUM_SUC; i++){
         bool flag = false;
         for(int j = 0 ; j < NUM_SUC; j++){
@@ -389,7 +334,6 @@ void Message::update_pre_successor(bool haveLock){
         successors[i] = temp_suc[i];
     }
     
-    
     for(int i = 0; i < NUM_PRE; i++){
         bool flag = false;
         for(int j = 0 ; j < NUM_PRE; j++){
@@ -401,7 +345,6 @@ void Message::update_pre_successor(bool haveLock){
             string my_msg1("Set HB of VM ");
             my_msg1.append(to_string(predecessors[i]));
             my_msg1.append(" to 0");
-            
             my_logger_lock.lock();
             my_logger->write_to_file(my_msg1);
             my_logger_lock.unlock();
@@ -413,10 +356,6 @@ void Message::update_pre_successor(bool haveLock){
     }
     
     
-    
-    
-    
-//
 //    std::sort(std::begin(temp_suc), std::end(temp_suc));
 //    std::sort(std::begin(successors), std::end(successors));
 //
@@ -444,7 +383,6 @@ void Message::update_pre_successor(bool haveLock){
 //    for(int i = 0 ; i < NUM_SUC; i++){
 //        successors[i] = temp_suc[i];
 //    }
-    
 //    std::sort(std::begin(temp_pre), std::end(temp_pre));
 //    std::sort(std::begin(predecessors), std::end(predecessors));
 //
@@ -493,13 +431,11 @@ void Message::update_pre_successor(bool haveLock){
     my_logger_lock.unlock();
     
     //NEED TO DO: Need to send msg to old pre/successors that still alive
-    
     if(haveLock == false){
         predecessors_lock.unlock();
         successors_lock.unlock();
         mem_list_lock.unlock();
     }
-    
 }
 
 
