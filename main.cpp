@@ -338,8 +338,10 @@ void heartbeat_checker_handler(){
                         for(int i = 0 ; i < NUM_VMS; i++){
                             if(membership_list[i].vm_status == ALIVE){
                                 memlist_str.append(to_string(i));
+                                memlist_str.push_back(' ');
                             }
                         }
+                        memlist_str.push_back('\n');
                         my_logger_lock.lock();
                         my_logger->write_to_file(memlist_str);
                         my_logger_lock.unlock();
@@ -393,8 +395,10 @@ void heartbeat_checker_handler(){
                         for(int i = 0 ; i < NUM_VMS; i++){
                             if(membership_list[i].vm_status == ALIVE){
                                 memlist_str.append(to_string(i));
+                                memlist_str.push_back(' ');
                             }
                         }
+                        memlist_str.push_back('\n');
                         my_logger_lock.lock();
                         my_logger->write_to_file(memlist_str);
                         my_logger_lock.unlock();

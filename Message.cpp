@@ -112,9 +112,12 @@ void Message::handle_R_msg(string msg){
         membership_list[vm_num].vm_time_stamp  = msg.substr(3+i*12 ,10);
         //Logging
         memlist_str.append(to_string(vm_num));
+        memlist_str.append(" ");
+
     }
     
-    
+    memlist_str.append("\n");
+
     my_logger_lock.lock();
     my_logger->write_to_file(memlist_str);
     my_logger_lock.unlock();
@@ -158,8 +161,10 @@ void Message::handle_N_msg(string msg){
     for(int i = 0 ; i < NUM_VMS; i++){
         if(membership_list[i].vm_status == ALIVE){
             memlist_str.append(to_string(i));
+            memlist_str.push_back(' ');
         }
     }
+    memlist_str.push_back('\n');
     my_logger_lock.lock();
     my_logger->write_to_file(memlist_str);
     my_logger_lock.unlock();
@@ -192,13 +197,16 @@ void Message::handle_L_msg(string msg){
     successors_lock.unlock();
     mem_list_lock.unlock();
     
+  
     //Logging
     string memlist_str("Current Membership List: ");
     for(int i = 0 ; i < NUM_VMS; i++){
         if(membership_list[i].vm_status == ALIVE){
             memlist_str.append(to_string(i));
+            memlist_str.push_back(' ');
         }
     }
+    memlist_str.push_back('\n');
     my_logger_lock.lock();
     my_logger->write_to_file(memlist_str);
     my_logger_lock.unlock();
@@ -245,6 +253,7 @@ void Message::handle_J_msg(string msg){
     for(int i = 0 ; i < NUM_VMS; i++){
         if(membership_list[i].vm_status == ALIVE){
             memlist_str.append(to_string(i));
+            memlist_str.push_backg(' ');
         }
     }
     //Update membership_list
@@ -441,8 +450,10 @@ void Message::update_pre_successor(bool haveLock){
     for(int i = 0 ; i < NUM_VMS; i++){
         if(membership_list[i].vm_status == ALIVE){
             memlist_str.append(to_string(i));
+            memlist_str.push_back(' ');
         }
     }
+    memlist_str.push_back('\n');
     my_logger_lock.lock();
     my_logger->write_to_file(memlist_str);
     my_logger_lock.unlock();
