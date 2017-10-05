@@ -348,8 +348,8 @@ void Message::update_pre_successor(bool haveLock){
         predecessors_lock.lock();
     }
 
-    int temp_suc[NUM_SUC] = {-1};
-    int temp_pre[NUM_PRE] = {-1};
+    int temp_suc[NUM_SUC] = {-1,-1};
+    int temp_pre[NUM_PRE] = {-1,-1};
     int count = 0;
     unordered_set<int> suc_set;
     
@@ -372,7 +372,7 @@ void Message::update_pre_successor(bool haveLock){
             temp_pre[count] = temp_idx;
             count++;
         }
-        temp_idx  = (temp_idx+1)%NUM_VMS;
+        temp_idx  = (temp_idx-1 + NUM_VMS)%NUM_VMS;
     }
 
     //Set HB of old pre/successors that still ALIVE to 0
