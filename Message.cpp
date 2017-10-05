@@ -379,11 +379,11 @@ void Message::update_pre_successor(bool haveLock){
     for(int i = 0; i < NUM_SUC; i++){
         bool flag = false;
         for(int j = 0 ; j < NUM_SUC; j++){
-            if(temp_suc[j] != successors[i]){
+            if(temp_suc[j] == successors[i]){
                 flag = true;
             }
         }
-        if(flag == true && membership_list[successors[i]].vm_status == ALIVE){
+        if(flag == false && successors[i] != -1 && membership_list[successors[i]].vm_status == ALIVE){
             string my_msg1("Set HB of VM ");
             my_msg1.append(to_string(successors[i]));
             my_msg1.append(" to 0");
@@ -402,11 +402,11 @@ void Message::update_pre_successor(bool haveLock){
     for(int i = 0; i < NUM_PRE; i++){
         bool flag = false;
         for(int j = 0 ; j < NUM_PRE; j++){
-            if(temp_pre[j] != predecessors[i]){
+            if(temp_pre[j] == predecessors[i]){
                 flag = true;
             }
         }
-        if(flag == true && membership_list[predecessors[i]].vm_status == ALIVE){
+        if(flag == false && predecessors[i] != -1 && membership_list[predecessors[i]].vm_status == ALIVE){
             string my_msg1("Set HB of VM ");
             my_msg1.append(to_string(predecessors[i]));
             my_msg1.append(" to 0");
