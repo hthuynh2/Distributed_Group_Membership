@@ -253,7 +253,7 @@ void Message::handle_J_msg(string msg){
     for(int i = 0 ; i < NUM_VMS; i++){
         if(membership_list[i].vm_status == ALIVE){
             memlist_str.append(to_string(i));
-            memlist_str.push_backg(' ');
+            memlist_str.push_back(' ');
         }
     }
     //Update membership_list
