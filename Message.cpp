@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include "Message.h"
 #include <string>
-
+#include <unordered_set>
 using namespace std;
 /*This constructor initialize the string sender used to create msg later
  */
@@ -284,48 +284,97 @@ void Message::update_pre_successor(bool haveLock){
         predecessors_lock.lock();
     }
 
-    int temp_suc[NUM_SUC];
-    int temp_pre[NUM_PRE];
+    int temp_suc[NUM_SUC] = {-1};
+    int temp_pre[NUM_PRE] = {-1};
     int count = 0;
+    unordered_set<int> suc_set;
+    
+    
+    int temp_idx = (my_id+1)%NUM_VMS;
+    while(temp_idx != my_id && count < NUM_SUC){
+        if(membership_list[temp_idx].vm_status == ALIVE){
+            suc_set.insert(temp_idx);
+            temp_suc[count] = temp_idx;
+            count++;
+        }
+        temp_idx  = (temp_idx+1)%NUM_VMS;
+    }
+    
+    count  = 0;
+    
+ temp_idx = (my_id - 1 + NUM_VMS)%NUM_VMS;
+    while(temp_idx != my_id && count < NUM_PRE){
+        if(membership_list[temp_idx].vm_status == ALIVE && suc_set.find(temp_idx) == suc_set.end()){
+            temp_pre[count] = temp_idx;
+            count++;
+        }
+        temp_idx  = (temp_idx+1)%NUM_VMS;
+    }
+    
     //update successor
-    for(int i = 0 ; i < NUM_VMS && count < NUM_SUC; i++){
-        int target = (i + my_id + 1)% NUM_VMS;
-        if(target == my_id){
-            for(int j = 0 ; j < NUM_SUC - count; j++){
-                temp_suc[j + count] = -1;
+//    for(int i = my_id+1 ; i < NUM_VMS && count < NUM_SUC; i++){
+//        int target = (i + my_id + 1)% NUM_VMS;
+//        if(target == my_id){
+//            for(int j = 0 ; j < NUM_SUC - count; j++){
+//                temp_suc[j + count] = -1;
+//            }
+//            break;
+//        }
+//        else if(membership_list[target].vm_status == ALIVE){
+//            suc_set.insert(target);
+//            temp_suc[count] = target;
+//            count++;
+//        }
+//    }
+//
+//
+//
+    
+    
+    
+    
+    //update successor
+//    for(int i = 0 ; i < NUM_VMS && count < NUM_SUC; i++){
+//        int target = (i + my_id + 1)% NUM_VMS;
+//        if(target == my_id){
+//            for(int j = 0 ; j < NUM_SUC - count; j++){
+//                temp_suc[j + count] = -1;
+//            }
+//            break;
+//        }
+//        else if(membership_list[target].vm_status == ALIVE){
+//            suc_set.insert(target);
+//            temp_suc[count] = target;
+//            count++;
+//        }
+//    }
+    
+//    count = 0;
+//    for(int i = 0 ; i < NUM_VMS && count < NUM_PRE; i++){
+//        int target = (my_id - 1 - i + NUM_VMS)% NUM_VMS;
+//        if(target == my_id){
+////            for(int j = 0 ; j < NUM_SUC - count; j++){
+////                temp_pre[j + count] = -1;
+////            }
+//            break;
+//        }
+//        else if(membership_list[target].vm_status == ALIVE){
+//            if(suc_set.find(target) == suc_set.end()){
+//                temp_pre[count] = target;
+////                count++;
+//            }
+//        }
+//    }
+//
+//
+    for(int i = 0; i < NUM_SUC; i++){
+        bool flag = false;
+        for(int j = 0 ; j < NUM_SUC; j++){
+            if(temp_suc[j] == successors[i]){
+                flag = true;
             }
-            break;
         }
-        else if(membership_list[target].vm_status == ALIVE){
-            temp_suc[count] = target;
-            count++;
-        }
-    }
-    count = 0;
-    for(int i = 0 ; i < NUM_VMS && count < NUM_PRE; i++){
-        int target = (my_id - 1 - i + NUM_VMS)% NUM_VMS;
-        if(target == my_id){
-            for(int j = 0 ; j < NUM_SUC - count; j++){
-                temp_pre[j + count] = -1;
-            }
-            break;
-        }
-        else if(membership_list[target].vm_status == ALIVE){
-            temp_pre[count] = target;
-            count++;
-        }
-    }
-    std::sort(std::begin(temp_suc), std::end(temp_suc));
-    std::sort(std::begin(successors), std::end(successors));
-
-    //Find all successors that are still alive but not int new successors list
-    int idx = 0;
-    for(idx = 0; idx < NUM_SUC; idx++){
-        if(successors[idx] > temp_suc[NUM_SUC -1])
-            break;
-    }
-    for(int i = idx; i < NUM_SUC; i++){
-        if(successors[i] >=0 && membership_list[successors[i]].vm_status == ALIVE){
+        if(flag == true && membership_list[successors[i]].vm_status == ALIVE){
             string my_msg1("Set HB of VM ");
             my_msg1.append(to_string(successors[i]));
             my_msg1.append(" to 0");
@@ -335,31 +384,20 @@ void Message::update_pre_successor(bool haveLock){
             my_logger_lock.unlock();
             membership_list[successors[i]].vm_heartbeat = 0;
         }
-
     }
-    
-    for(int i = 0 ; i < NUM_SUC; i++){
+    for(int i = 0; i < NUM_SUC; i++){
         successors[i] = temp_suc[i];
     }
     
-    std::sort(std::begin(temp_pre), std::end(temp_pre));
-    std::sort(std::begin(predecessors), std::end(predecessors));
     
-    //Find all precessor that are still alive but not int new successors list
-    for(idx = 0 ; idx < NUM_SUC; idx++){
-        if(temp_pre[idx] >= 0 )
-            break;
-    }
-    int min_non_neg = temp_pre[idx];
-    for(idx = NUM_PRE-1; idx >= 0; idx --){
-        if(predecessors[idx] < min_non_neg){
-            break;
+    for(int i = 0; i < NUM_PRE; i++){
+        bool flag = false;
+        for(int j = 0 ; j < NUM_PRE; j++){
+            if(temp_pre[j] == predecessors[i]){
+                flag = true;
+            }
         }
-    }
-    for(int i = idx; i >=0; i--){
-        if(predecessors[i] >= 0 && membership_list[predecessors[i]].vm_status == ALIVE){
-            membership_list[predecessors[i]].vm_heartbeat = 0;
-            
+        if(flag == true && membership_list[predecessors[i]].vm_status == ALIVE){
             string my_msg1("Set HB of VM ");
             my_msg1.append(to_string(predecessors[i]));
             my_msg1.append(" to 0");
@@ -367,12 +405,76 @@ void Message::update_pre_successor(bool haveLock){
             my_logger_lock.lock();
             my_logger->write_to_file(my_msg1);
             my_logger_lock.unlock();
+            membership_list[predecessors[i]].vm_heartbeat = 0;
         }
     }
-    
-    for(int i = 0 ; i < NUM_SUC; i++){
+    for(int i = 0; i < NUM_SUC; i++){
         predecessors[i] = temp_pre[i];
     }
+    
+    
+    
+    
+    
+//
+//    std::sort(std::begin(temp_suc), std::end(temp_suc));
+//    std::sort(std::begin(successors), std::end(successors));
+//
+//
+//    //Find all successors that are still alive but not int new successors list
+//    int idx = 0;
+//    for(idx = 0; idx < NUM_SUC; idx++){
+//        if(successors[idx] > temp_suc[NUM_SUC -1])
+//            break;
+//    }
+//    for(int i = idx; i < NUM_SUC; i++){
+//        if(successors[i] >=0 && membership_list[successors[i]].vm_status == ALIVE){
+//            string my_msg1("Set HB of VM ");
+//            my_msg1.append(to_string(successors[i]));
+//            my_msg1.append(" to 0");
+//
+//            my_logger_lock.lock();
+//            my_logger->write_to_file(my_msg1);
+//            my_logger_lock.unlock();
+//            membership_list[successors[i]].vm_heartbeat = 0;
+//        }
+//
+//    }
+//
+//    for(int i = 0 ; i < NUM_SUC; i++){
+//        successors[i] = temp_suc[i];
+//    }
+    
+//    std::sort(std::begin(temp_pre), std::end(temp_pre));
+//    std::sort(std::begin(predecessors), std::end(predecessors));
+//
+//    //Find all precessor that are still alive but not int new successors list
+//    for(idx = 0 ; idx < NUM_SUC; idx++){
+//        if(temp_pre[idx] >= 0 )
+//            break;
+//    }
+//    int min_non_neg = temp_pre[idx];
+//    for(idx = NUM_PRE-1; idx >= 0; idx --){
+//        if(predecessors[idx] < min_non_neg){
+//            break;
+//        }
+//    }
+//    for(int i = idx; i >=0; i--){
+//        if(predecessors[i] >= 0 && membership_list[predecessors[i]].vm_status == ALIVE){
+//            membership_list[predecessors[i]].vm_heartbeat = 0;
+//            string my_msg1("Set HB of VM ");
+//            my_msg1.append(to_string(predecessors[i]));
+//            my_msg1.append(" to 0");
+//
+//            my_logger_lock.lock();
+//            my_logger->write_to_file(my_msg1);
+//            my_logger_lock.unlock();
+//        }
+//    }
+//
+//    for(int i = 0 ; i < NUM_SUC; i++){
+//        predecessors[i] = temp_pre[i];
+//    }
 
     string log_msg("Sucessors: ");
         for(int i = 0 ; i < NUM_SUC; i++){
