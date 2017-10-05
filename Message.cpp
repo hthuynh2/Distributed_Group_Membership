@@ -425,12 +425,15 @@ void Message::update_pre_successor(bool haveLock){
     for(int i = 0 ; i < NUM_SUC; i++){
         log_msg.append(to_string(successors[i]));
         log_msg.append(" ");
+        cout << successors[i] << " ";
     }
     
     log_msg.append(" || Predecessors: ");
     for(int i = 0 ; i < NUM_SUC; i++){
         log_msg.append(to_string(predecessors[i]));
         log_msg.append(" ");
+        cout << predecessors[i] << " ";
+
     }
     
     log_msg.push_back('\n');
