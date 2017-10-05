@@ -144,6 +144,15 @@ void Message::handle_N_msg(string msg){
     membership_list[sender_id].vm_time_stamp = sender_st;
     
     
+    successors_lock.lock();
+    predecessors_lock.lock();
+    
+    update_pre_successor(true);
+    
+    predecessors_lock.unlock();
+    successors_lock.unlock();
+    mem_list_lock.unlock();
+    
     //Logging
     string memlist_str("Current Membership List: ");
     for(int i = 0 ; i < NUM_VMS; i++){
@@ -155,14 +164,6 @@ void Message::handle_N_msg(string msg){
     my_logger->write_to_file(memlist_str);
     my_logger_lock.unlock();
     
-    successors_lock.lock();
-    predecessors_lock.lock();
-    
-    update_pre_successor(true);
-    
-    predecessors_lock.unlock();
-    successors_lock.unlock();
-    mem_list_lock.unlock();
     return;
 }
 
@@ -181,6 +182,16 @@ void Message::handle_L_msg(string msg){
     membership_list[sender_id].vm_id  = sender_id;
     membership_list[sender_id].vm_time_stamp = sender_st;
     
+    
+    successors_lock.lock();
+    predecessors_lock.lock();
+    
+    update_pre_successor(true);
+    
+    predecessors_lock.unlock();
+    successors_lock.unlock();
+    mem_list_lock.unlock();
+    
     //Logging
     string memlist_str("Current Membership List: ");
     for(int i = 0 ; i < NUM_VMS; i++){
@@ -191,18 +202,7 @@ void Message::handle_L_msg(string msg){
     my_logger_lock.lock();
     my_logger->write_to_file(memlist_str);
     my_logger_lock.unlock();
-
     
-    
-    
-    successors_lock.lock();
-    predecessors_lock.lock();
-    
-    update_pre_successor(true);
-    
-    predecessors_lock.unlock();
-    successors_lock.unlock();
-    mem_list_lock.unlock();
     return;
 }
 
@@ -273,6 +273,18 @@ void Message::handle_J_msg(string msg){
     string r_msg = create_R_msg(vm_list);
     UDP_Server my_sender;
     my_sender.send_msg(vm_hosts[sender_id], r_msg);
+    
+    //Logging
+//    string memlist_str("Current Membership List: ");
+//    for(int i = 0 ; i < NUM_VMS; i++){
+//        if(membership_list[i].vm_status == ALIVE){
+//            memlist_str.append(to_string(i));
+//        }
+//    }
+//    my_logger_lock.lock();
+//    my_logger->write_to_file(memlist_str);
+//    my_logger_lock.unlock();
+    
 }
 
 /*This method handles H message. It update the heartbeat of pre/successors
@@ -423,6 +435,18 @@ void Message::update_pre_successor(bool haveLock){
         successors_lock.unlock();
         mem_list_lock.unlock();
     }
+    
+    //Logging
+    string memlist_str("Current Membership List: ");
+    for(int i = 0 ; i < NUM_VMS; i++){
+        if(membership_list[i].vm_status == ALIVE){
+            memlist_str.append(to_string(i));
+        }
+    }
+    my_logger_lock.lock();
+    my_logger->write_to_file(memlist_str);
+    my_logger_lock.unlock();
+    
 }
 
 
