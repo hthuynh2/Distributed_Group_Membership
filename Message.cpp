@@ -7,7 +7,9 @@
 
 #include <stdio.h>
 #include "Message.h"
+#include <string>
 
+using namespace std;
 /*This constructor initialize the string sender used to create msg later
  */
 Message::Message(){
@@ -323,8 +325,17 @@ void Message::update_pre_successor(bool haveLock){
             break;
     }
     for(int i = idx; i < NUM_SUC; i++){
-        if(successors[i] >=0 && membership_list[successors[i]].vm_status == ALIVE)
+        if(successors[i] >=0 && membership_list[successors[i]].vm_status == ALIVE){
+            string my_msg1("Set HB of VM ");
+            my_msg1.append(to_string(successors[i]));
+            my_msg1.append(" to 0");
+            
+            my_logger_lock.lock();
+            my_logger->write_to_file(my_msg1);
+            my_logger_lock.unlock();
             membership_list[successors[i]].vm_heartbeat = 0;
+        }
+
     }
     
     for(int i = 0 ; i < NUM_SUC; i++){
@@ -346,8 +357,17 @@ void Message::update_pre_successor(bool haveLock){
         }
     }
     for(int i = idx; i >=0; i--){
-        if(predecessors[i] >= 0 && membership_list[predecessors[i]].vm_status == ALIVE)
+        if(predecessors[i] >= 0 && membership_list[predecessors[i]].vm_status == ALIVE){
             membership_list[predecessors[i]].vm_heartbeat = 0;
+            
+            string my_msg1("Set HB of VM ");
+            my_msg1.append(to_string(predecessors[i]));
+            my_msg1.append(" to 0");
+            
+            my_logger_lock.lock();
+            my_logger->write_to_file(my_msg1);
+            my_logger_lock.unlock();
+        }
     }
     
     for(int i = 0 ; i < NUM_SUC; i++){

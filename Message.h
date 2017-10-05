@@ -13,6 +13,7 @@
 #include "UDP_Client.h"
 #include "Logger.h"
 #include "Gossiper.h"
+
 class Message{
 private:
     string sender;
