@@ -379,7 +379,7 @@ void Message::update_pre_successor(bool haveLock){
     for(int i = 0; i < NUM_SUC; i++){
         bool flag = false;
         for(int j = 0 ; j < NUM_SUC; j++){
-            if(temp_suc[j] == successors[i]){
+            if(temp_suc[j] != successors[i]){
                 flag = true;
             }
         }
@@ -402,7 +402,7 @@ void Message::update_pre_successor(bool haveLock){
     for(int i = 0; i < NUM_PRE; i++){
         bool flag = false;
         for(int j = 0 ; j < NUM_PRE; j++){
-            if(temp_pre[j] == predecessors[i]){
+            if(temp_pre[j] != predecessors[i]){
                 flag = true;
             }
         }
