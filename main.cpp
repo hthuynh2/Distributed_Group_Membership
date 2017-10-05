@@ -379,6 +379,18 @@ void heartbeat_checker_handler(){
                 }
             }
         }
+        
+        //Logging
+        string memlist_str("Current Membership List: ");
+        for(int i = 0 ; i < NUM_VMS; i++){
+            if(membership_list[i].vm_status == ALIVE){
+                memlist_str.append(to_string(i));
+            }
+        }
+        my_logger_lock.lock();
+        my_logger->write_to_file(memlist_str);
+        my_logger_lock.unlock();
+        
         predecessors_lock.unlock();
         successors_lock.unlock();
         mem_list_lock.unlock();

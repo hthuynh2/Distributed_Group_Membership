@@ -101,6 +101,7 @@ string Message::create_H_msg(){
  */
 void Message::handle_R_msg(string msg){
     cout << msg;
+    string memlist_str("Current Membership List: ");
 
     int num_alive_vm = (msg.size() - 2)/12;
     mem_list_lock.lock();
@@ -109,7 +110,14 @@ void Message::handle_R_msg(string msg){
         membership_list[vm_num].vm_status  = ALIVE;
         membership_list[vm_num].vm_id  = vm_num;
         membership_list[vm_num].vm_time_stamp  = msg.substr(3+i*12 ,10);
+        //Logging
+        memlist_str.append(to_string(vm_num));
     }
+    
+    
+    my_logger_lock.lock();
+    my_logger->write_to_file(memlist_str);
+    my_logger_lock.unlock();
     
     successors_lock.lock();
     predecessors_lock.lock();
@@ -134,6 +142,18 @@ void Message::handle_N_msg(string msg){
     membership_list[sender_id].vm_status  = ALIVE;
     membership_list[sender_id].vm_id  = sender_id;
     membership_list[sender_id].vm_time_stamp = sender_st;
+    
+    
+    //Logging
+    string memlist_str("Current Membership List: ");
+    for(int i = 0 ; i < NUM_VMS; i++){
+        if(membership_list[i].vm_status == ALIVE){
+            memlist_str.append(to_string(i));
+        }
+    }
+    my_logger_lock.lock();
+    my_logger->write_to_file(memlist_str);
+    my_logger_lock.unlock();
     
     successors_lock.lock();
     predecessors_lock.lock();
@@ -160,6 +180,20 @@ void Message::handle_L_msg(string msg){
     membership_list[sender_id].vm_status  = DEAD;
     membership_list[sender_id].vm_id  = sender_id;
     membership_list[sender_id].vm_time_stamp = sender_st;
+    
+    //Logging
+    string memlist_str("Current Membership List: ");
+    for(int i = 0 ; i < NUM_VMS; i++){
+        if(membership_list[i].vm_status == ALIVE){
+            memlist_str.append(to_string(i));
+        }
+    }
+    my_logger_lock.lock();
+    my_logger->write_to_file(memlist_str);
+    my_logger_lock.unlock();
+
+    
+    
     
     successors_lock.lock();
     predecessors_lock.lock();
@@ -207,9 +241,16 @@ void Message::handle_J_msg(string msg){
         membership_list[sender_id].vm_time_stamp = sender_st;
     }
     
+    string memlist_str("Current Membership List: ");
+    for(int i = 0 ; i < NUM_VMS; i++){
+        if(membership_list[i].vm_status == ALIVE){
+            memlist_str.append(to_string(i));
+        }
+    }
     //Update membership_list
     mem_list_lock.unlock();
 
+    memlist_str.append("\n");
     
     //////
     string log_msg("VM");
@@ -218,10 +259,12 @@ void Message::handle_J_msg(string msg){
     log_msg.append(sender_st);
     log_msg.append(" joined.\n");
     
+    
     my_logger_lock.lock();
     my_logger->write_to_file(log_msg);
+    my_logger->write_to_file(memlist_str);
+
     my_logger_lock.unlock();
-    
     
     //Update pre/sucessor
     update_pre_successor(false);
@@ -330,6 +373,7 @@ void Message::update_pre_successor(bool haveLock){
             membership_list[successors[i]].vm_heartbeat = 0;
         }
     }
+    
     for(int i = 0; i < NUM_SUC; i++){
         successors[i] = temp_suc[i];
     }
@@ -351,81 +395,24 @@ void Message::update_pre_successor(bool haveLock){
             membership_list[predecessors[i]].vm_heartbeat = 0;
         }
     }
+    
     for(int i = 0; i < NUM_SUC; i++){
         predecessors[i] = temp_pre[i];
     }
     
-    
-//    std::sort(std::begin(temp_suc), std::end(temp_suc));
-//    std::sort(std::begin(successors), std::end(successors));
-//
-//
-//    //Find all successors that are still alive but not int new successors list
-//    int idx = 0;
-//    for(idx = 0; idx < NUM_SUC; idx++){
-//        if(successors[idx] > temp_suc[NUM_SUC -1])
-//            break;
-//    }
-//    for(int i = idx; i < NUM_SUC; i++){
-//        if(successors[i] >=0 && membership_list[successors[i]].vm_status == ALIVE){
-//            string my_msg1("Set HB of VM ");
-//            my_msg1.append(to_string(successors[i]));
-//            my_msg1.append(" to 0");
-//
-//            my_logger_lock.lock();
-//            my_logger->write_to_file(my_msg1);
-//            my_logger_lock.unlock();
-//            membership_list[successors[i]].vm_heartbeat = 0;
-//        }
-//
-//    }
-//
-//    for(int i = 0 ; i < NUM_SUC; i++){
-//        successors[i] = temp_suc[i];
-//    }
-//    std::sort(std::begin(temp_pre), std::end(temp_pre));
-//    std::sort(std::begin(predecessors), std::end(predecessors));
-//
-//    //Find all precessor that are still alive but not int new successors list
-//    for(idx = 0 ; idx < NUM_SUC; idx++){
-//        if(temp_pre[idx] >= 0 )
-//            break;
-//    }
-//    int min_non_neg = temp_pre[idx];
-//    for(idx = NUM_PRE-1; idx >= 0; idx --){
-//        if(predecessors[idx] < min_non_neg){
-//            break;
-//        }
-//    }
-//    for(int i = idx; i >=0; i--){
-//        if(predecessors[i] >= 0 && membership_list[predecessors[i]].vm_status == ALIVE){
-//            membership_list[predecessors[i]].vm_heartbeat = 0;
-//            string my_msg1("Set HB of VM ");
-//            my_msg1.append(to_string(predecessors[i]));
-//            my_msg1.append(" to 0");
-//
-//            my_logger_lock.lock();
-//            my_logger->write_to_file(my_msg1);
-//            my_logger_lock.unlock();
-//        }
-//    }
-//
-//    for(int i = 0 ; i < NUM_SUC; i++){
-//        predecessors[i] = temp_pre[i];
-//    }
-
     string log_msg("Sucessors: ");
-        for(int i = 0 ; i < NUM_SUC; i++){
-            log_msg.append(to_string(successors[i]));
-            log_msg.append(" ");
-        }
+    for(int i = 0 ; i < NUM_SUC; i++){
+        log_msg.append(to_string(successors[i]));
+        log_msg.append(" ");
+    }
+    
     log_msg.append(" || Predecessors: ");
     for(int i = 0 ; i < NUM_SUC; i++){
         log_msg.append(to_string(predecessors[i]));
         log_msg.append(" ");
     }
-    log_msg.push_back('\n');
     
+    log_msg.push_back('\n');
     my_logger_lock.lock();
     my_logger->write_to_file(log_msg);
     my_logger_lock.unlock();
