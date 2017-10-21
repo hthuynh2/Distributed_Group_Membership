@@ -1,32 +1,37 @@
 //
 //  main.cpp
-//  
+//
 //
 //  Created by Hieu Huynh on 9/27/17.
 //
 
+
+
 #include "common.h"
-#include "UDP_Client.h"
-#include "UDP_Server.h"
-#include "Message.h"
-#include "Logger.h"
-#include "Gossiper.h"
+#include "Protocol.h"
+#include "UDP.h"
+#include "logging.h"
 
+membership::Logger my_logger;
+membership::Logger::Handle main_log = my_logger.get_handle("Main\t\t\t\t");
+membership::Logger::Handle hb_sender_log = my_logger.get_handle("Heartbeat Sender\t");
+membership::Logger::Handle hb_checker_log = my_logger.get_handle("Heartbeat Checker\t");
+membership::Logger::Handle io_log = my_logger.get_handle("User Input\t\t\t");
+membership::Logger::Handle update_hbs_log = my_logger.get_handle("Heartbeat Targets\t");
+membership::Logger::Handle protocol_log = my_logger.get_handle("Protocol\t\t\t");
 
-VM_info membership_list[NUM_VMS];
-int successors[NUM_SUC];
-int predecessors[NUM_PRE] ;
-int my_id ;
-string my_id_str ;
-int my_socket_fd ;
-std::mutex mem_list_lock;
-std::mutex successors_lock;
-std::mutex predecessors_lock;
-std::mutex my_logger_lock;
+unordered_map<int, VM_info> vm_info_map;
+set<int> membership_list;
+std::mutex membership_list_lock;
+set<int> hb_targets;
+std::mutex hb_targets_lock;
 
-Logger* my_logger;
-UDP_Client* my_listener;
-string time_stamp ;
+//No need lock
+int my_socket_fd;
+VM_info my_vm_info;
+void update_hb_targets(bool haveLock);
+
+UDP* my_listener;
 
 string vm_hosts[NUM_VMS] =  {
     "fa17-cs425-g13-01.cs.illinois.edu",
@@ -42,42 +47,241 @@ string vm_hosts[NUM_VMS] =  {
 };
 
 void heartbeat_checker_handler();
-void get_membership_list();
+void get_membership_list(bool is_VM0);
 void init_machine();
 void msg_handler_thread(string msg);
 void heartbeat_sender_handler();
 void heartbeat_checker_handler();
+void update_hb_targets(bool haveLock);
+string int_to_string(int num);
+int string_to_int(string str);
+void print_membership_list();
+
+bool isJoin;
+std::mutex isJoin_lock;
+
+
+/*This function update the HB targets based on the current membershiplist
+ *input:    haveLock: indicate if having lock or not
+ *return:   Nothing
+ */
+void update_hb_targets(bool haveLock){
+    if(haveLock == false){
+        membership_list_lock.lock();
+        hb_targets_lock.lock();
+    }
+    
+    set<int> new_hb_targets;
+    //Get new targets
+
+    auto my_it = membership_list.find(my_vm_info.vm_num);
+    int count = 0;
+    
+    //Get sucessors
+    for(auto it = next(my_it); it != membership_list.end() && count < NUM_TARGETS/2; it++){
+        new_hb_targets.insert(*it);
+        count ++;
+    }
+    
+    for(auto it = membership_list.begin(); it != my_it && count < NUM_TARGETS/2; it++){
+        new_hb_targets.insert(*it);
+        count ++;
+    }
+    
+    //Get predecessors
+    if(count == NUM_TARGETS/2){
+        count = 0;
+        if(my_it != membership_list.begin()){
+            for(auto it = prev(my_it); it != membership_list.begin() && count < NUM_TARGETS/2; it--){
+                if(new_hb_targets.find(*it) == new_hb_targets.end()){
+                    new_hb_targets.insert(*it);
+                    count++;
+                }
+            }
+            if(count < (NUM_TARGETS/2)  && new_hb_targets.find(*membership_list.begin()) == new_hb_targets.end()
+               && (*membership_list.begin()) != *my_it){
+                count++;
+                new_hb_targets.insert(*membership_list.begin());
+            }
+        }
+        for(auto it = prev(membership_list.end()); it != my_it && count < NUM_TARGETS/2; it--){
+            if(new_hb_targets.find(*it) == new_hb_targets.end()){
+                new_hb_targets.insert(*it);
+                count++;
+            }
+        }
+    }
+    Protocol p ;
+    UDP udp;
+    //Old targets is not in new targets, set HB to 0
+    for(auto it = hb_targets.begin(); it != hb_targets.end(); it++){
+        if(new_hb_targets.find(*it) == new_hb_targets.end() && membership_list.find(*it) != membership_list.end()){
+            vm_info_map[*it].heartbeat = 0;
+            string t_msg = p.create_T_msg();
+            udp.send_msg(vm_info_map[*it].ip_addr_str, t_msg);
+        }
+    }
+    
+    //Update targets
+    hb_targets.erase(hb_targets.begin(), hb_targets.end());
+    for(auto it = new_hb_targets.begin(); it != new_hb_targets.end(); it++){
+        hb_targets.insert(*it);
+    }
+
+	// Log Updates
+	update_hbs_log << "New targets ";
+	for(auto i : hb_targets) {
+		update_hbs_log << i << " ";
+	}
+	update_hbs_log <<= "";
+
+    if(haveLock == false){
+        hb_targets_lock.unlock();
+        membership_list_lock.unlock();
+    }
+    return;
+}
+
+/*This function convert the num from 0-99 to a string with 2 char
+ *input:    num: number
+ *return:   string of that number
+ */
+string int_to_string(int num){
+    string ret("");
+    int first_digit = num/10;
+    int sec_digit = num%10;
+    ret.push_back((char)(first_digit + '0'));
+    ret.push_back((char)(sec_digit + '0'));
+    return ret;
+}
+
+/*This function convert the string of number to int
+ *input:    str: string
+ *return:    number
+ */
+int string_to_int(string str){
+    int ret = 0;
+    for(int i = 0; i < (int)str.size(); i++){
+        ret = ret*10 + (str[i] - '0');
+    }
+    return ret;
+}
+
+/*This function print out the membershiplist
+ *input:    none
+ *return:    none
+ */
+void print_membership_list(){
+    cout <<"Current membership list: \n";
+    for(auto it = membership_list.begin(); it != membership_list.end(); it++){
+        cout << "id: " << vm_info_map[*it].vm_num << " --- ip address: " << vm_info_map[*it].ip_addr_str
+        << " --- time stamp: "<<vm_info_map[*it].time_stamp << "\n";
+    }
+}
 
 
 /*This function send request to VM0 to get membershiplist, and set the membership list based on response
- *Input:    None
+ *Input:    bool:
  *Return:   None
  */
-void get_membership_list(){
-    Message my_msg;
-    string request_msg = my_msg.create_J_msg();
-    UDP_Server temp_server;
-    
-    for(int i = 0 ; i < NUM_VMS; i++){
-        if(i != my_id)
-            membership_list[i] = {i, "0", DEAD, 0};
-        else
-            membership_list[i] = {i, time_stamp, ALIVE, 0};
-    }
-    
-    while(1){
+void get_membership_list(bool is_vm0){
+    UDP local_udp;
+    Protocol local_proc;
+    string request_msg = local_proc.create_J_msg();
+    if(is_vm0 == false){    //If this is not VM0, send request to VM0 until get the response
         cout << "Requesting membership list from VM0...\n";
-        temp_server.send_msg(vm_hosts[0], request_msg);
-        string r_msg = my_listener->read_msg_non_block(200);
-        if(r_msg.size() == 0){
-            continue;
+        while(1){
+            local_udp.send_msg(vm_hosts[0], request_msg);
+            string i_msg = local_udp.read_msg_non_block(200);
+            if((i_msg.size() == 0) || (i_msg[0] != 'I') ){
+                continue;
+            }
+            int num_node = string_to_int(i_msg.substr(3,2));        //Initialize the membership list based on VM0 response
+            if((int)i_msg.size() == num_node*16 + 6){
+                local_proc.handle_I_msg(i_msg);
+                break;
+            }
         }
-        if((r_msg[0] == 'R') && ((r_msg.size() -2 )%12 ==0)){
-            my_msg.handle_R_msg(r_msg);
-            break;
+    }
+    else{           //If this is VM0, send msg to all other VMs to to check if they are still alive or not
+        bool got_msg = false;
+        cout << "Checking if there is any VM still alive...\n";
+        for(int i = 1; i < NUM_VMS; i++){
+            local_udp.send_msg(vm_hosts[i], request_msg);
+            string i_msg = local_udp.read_msg_non_block(200);
+            if((i_msg.size() == 0) || (i_msg[0] != 'I') ){
+                continue;
+            }
+            int num_node = string_to_int(i_msg.substr(3,2));        //Set membership list based on the response
+            if((int)i_msg.size() == num_node*16 + 6){
+                got_msg = true;
+                local_proc.handle_I_msg(i_msg);
+                break;
+            }
+        }
+        if(got_msg == false){
+            string i_msg = local_udp.read_msg_non_block(200);
+            if((i_msg.size() > 0) || (i_msg[0] == 'I') ){
+                int num_node = string_to_int(i_msg.substr(3,2));
+                if((int)i_msg.size() == num_node*16 + 6){
+                    got_msg = true;
+                    local_proc.handle_I_msg(i_msg);
+                }
+            }
+        }
+        if(got_msg == false){
+            membership_list.insert(0);
+            vm_info_map[0] = my_vm_info;
         }
     }
 }
+
+/*This function return ip of this VM
+ *Input:    bool:
+ *Return:   None
+ */
+void get_my_ip(){
+    struct addrinfo hints, *res, *p;
+    int status;
+    char ipstr[INET6_ADDRSTRLEN];
+    
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    char my_addr[512];
+    gethostname(my_addr,512);
+    
+    if ((status = getaddrinfo(my_addr, NULL, &hints, &res)) != 0) {
+        perror("Cannot get my addrinfo\n");
+        exit(1);
+    }
+    
+    for(p = res;p != NULL; p = p->ai_next) {
+        struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+        void * addr = &(ipv4->sin_addr);
+        // convert the IP to a string and print it:
+        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
+        break;
+    }
+    freeaddrinfo(res); // free the linked list
+    
+    //Get Bytes from ip address
+    unsigned short a, b, c, d;
+    sscanf(ipstr, "%hu.%hu.%hu.%hu", &a, &b, &c, &d);
+    my_vm_info.ip_addr[0] = (unsigned char) a;
+    my_vm_info.ip_addr[1] = (unsigned char) b;
+    my_vm_info.ip_addr[2] = (unsigned char) c;
+    my_vm_info.ip_addr[3] = (unsigned char) d;
+    
+    for (int i = 0 ; i < 4; i++) {
+        my_vm_info.ip_addr_str.append(to_string((unsigned int) my_vm_info.ip_addr[i]));
+        if(i != 3)
+            my_vm_info.ip_addr_str.push_back('.');
+    }
+    
+    return;
+}
+
+
 
 /*This function initilize the vm. It sets my_id, my_id_str, my_logger, my_listener, membership list
  *Input:    None
@@ -85,26 +289,16 @@ void get_membership_list(){
  */
 void init_machine(){
     //Init my_id and my_id_str
+    get_my_ip();
+    bool is_VM0 = false;
     char my_addr[512];
     gethostname(my_addr,512);
-    for(int i = 0 ; i < NUM_VMS; i++){
-        if(strncmp(my_addr, vm_hosts[i].c_str(), vm_hosts[i].size()) == 0){
-            my_id = i;
-            break;
-        }
+    if(strncmp(my_addr, vm_hosts[0].c_str(), vm_hosts[0].size()) == 0){
+        is_VM0 = true;
     }
-    my_id_str = to_string(my_id);
     
-    my_logger = new Logger();
-    
-    //Init pre/successor
-    for(int i = 0 ; i < NUM_SUC; i++){
-        successors[i] = -1;
-        predecessors[i] = -1;
-    }
     
     ///Initialize my_socket_fd
-    string host_name = vm_hosts[my_id];
     struct addrinfo hints, *servinfo, *p;
     int rv;
     memset(&hints, 0, sizeof hints);
@@ -112,24 +306,19 @@ void init_machine(){
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
     
-    if ((rv = getaddrinfo(host_name.c_str(),PORT, &hints, &servinfo)) != 0) {
-        //        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+    if ((rv = getaddrinfo(my_addr,PORT, &hints, &servinfo)) != 0) {
         perror("getaddrinfo: failed \n");
         exit(1);
     }
+    
     // loop through all the results and make a socket
     for(p = servinfo; p != NULL; p = p->ai_next) {
         if ((my_socket_fd = socket(p->ai_family, p->ai_socktype,
-                                p->ai_protocol)) == -1) {
+                                   p->ai_protocol)) == -1) {
             perror("server: socket fail");
             continue;
         }
         bind(my_socket_fd, p->ai_addr, p->ai_addrlen);
-//        if(bind(my_socket_fd, p->ai_addr, p->ai_addrlen) == -1){
-//            close(my_socket_fd);
-//            perror("listener: bind");
-//            continue;
-//        }
         break;
     }
     if(p == NULL){
@@ -139,27 +328,23 @@ void init_machine(){
     freeaddrinfo(servinfo);
     
     //Initialize UDP listener
-    my_listener = new UDP_Client();
+    my_listener = new UDP();
     
     //Get time_stamp
     time_t seconds;
     seconds = time (NULL);
-    time_stamp = to_string(seconds);
+    my_vm_info.time_stamp = to_string(seconds);
     
     //Get membership_list
-    if(my_id != 0){
-        get_membership_list();
+    if(is_VM0 == false){
+        get_membership_list(false);
     }
     else{
-        //IF VM0, Initialize all vms to dead. NEED TO CHANGE LATTER!!
-        for(int i = 1 ; i < NUM_VMS; i++){
-            if(i != my_id){
-                VM_info new_vm = {i, "0", DEAD, 0};
-                membership_list[i] = new_vm;
-            }
-        }
-        VM_info new_vm = {0, time_stamp, ALIVE, 0};
-        membership_list[my_id] = new_vm;
+        my_vm_info.vm_num = 0;
+        my_vm_info.make_id_str();
+        my_vm_info.heartbeat = 0;
+        get_membership_list(true);
+
     }
 }
 
@@ -168,58 +353,42 @@ void init_machine(){
  *Return:   None
  */
 void msg_handler_thread(string msg){
-    Message msg_handler;
-    
-    string str("Received: ");
-    str.append(msg);
-    
-    my_logger_lock.lock();
-    my_logger->write_to_file(str);
-    my_logger_lock.unlock();
-    
-    if(msg[0] == 'G'){
-        if(msg.size() != G_MESSAGE_LENGTH)
-            return;
-        Gossiper my_gossiper;
-        string new_msg = my_gossiper.get_msg(msg, false);
-        if(new_msg[0] == 'N'){
-            if(new_msg.size() != N_MESSAGE_LENGTH)
-                return;
-            msg_handler.handle_N_msg(new_msg);
-            
-        }
-        else if(new_msg[0] == 'L'){
-            if(new_msg.size() != L_MESSAGE_LENGTH)
-                return;
-            msg_handler.handle_L_msg(new_msg);
-        }
-    }
-    else if(msg[0] == 'H'){
+    Protocol local_protocol;
+    if(msg[0] == 'H'){
         if(msg.size() != H_MESSAGE_LENGTH)
             return;
-        msg_handler.handle_H_msg(msg);
+        local_protocol.handle_H_msg(msg);
     }
     else if(msg[0] == 'N'){
         if(msg.size() != N_MESSAGE_LENGTH)
             return;
-        msg_handler.handle_N_msg(msg);
-
+        local_protocol.handle_N_msg(msg, false);
+        
     }
     else if(msg[0] == 'L'){
         if(msg.size() != L_MESSAGE_LENGTH)
             return;
-        msg_handler.handle_L_msg(msg);
+        local_protocol.handle_L_msg(msg, false);
     }
-    else if(msg[0] == 'J' && my_id == 0){
+    else if(msg[0] == 'J'){
         if(msg.size() != J_MESSAGE_LENGTH)
             return;
-        msg_handler.handle_J_msg(msg);
+        local_protocol.handle_J_msg(msg);
+    } else if(msg[0] == 'G') {
+		local_protocol.handle_G_msg(msg, false);
+	}
+    else if(msg[0] == 'T'){
+        local_protocol.handle_T_msg(msg, false);
     }
-//    else if(msg[0] == 'R'){       //Only receive this once when startup. Did it in init_machine
-//        if((msg.size()-2)%12 != 0)
-//            return;
-//        msg_handler.handle_R_msg(msg);
-//    }
+    else if(msg[0] == 'Q'){
+        local_protocol.handle_Q_msg(msg, false);
+
+    }
+    //    else if(msg[0] == 'R'){       //Only receive this once when startup. Did it in init_machine
+    //        if((msg.size()-2)%12 != 0)
+    //            return;
+    //        msg_handler.handle_R_msg(msg);
+    //    }
 }
 
 /* This is thread handler to read and handle msg
@@ -229,14 +398,18 @@ void msg_handler_thread(string msg){
 void listener_thread_handler(){
     vector<std::thread> thread_vector;
     while(1){
-        string msg = my_listener->receive_msg();
+        isJoin_lock.lock();
+        if(isJoin == false){
+            isJoin_lock.unlock();
+            return;
+        }
+        isJoin_lock.unlock();
+        string msg = my_listener->read_msg_non_block(500);
+        
         if(msg.size() == 0){
             continue;
         }
-        std::thread th(msg_handler_thread,msg);
-        thread_vector.push_back(std::move(th));
-//        http://www.cplusplus.com/forum/unices/194352/
-//        thread_vector.back().join();
+        msg_handler_thread(msg);
     }
 }
 
@@ -245,39 +418,30 @@ void listener_thread_handler(){
  *Return:   None
  */
 void heartbeat_sender_handler(){
-    Message my_msg;
-    string msg = my_msg.create_H_msg();
+    Protocol local_protocol;
+    string h_msg = local_protocol.create_H_msg();
     while(1){
-        UDP_Server sender;
-        successors_lock.lock();
-        predecessors_lock.lock();
-        for(int i = 0 ; i < NUM_SUC; i++){
-            if(successors[i] >= 0 && successors[i] != my_id){
-                string str("Send HB to VM ");
-                str.append(to_string(successors[i]));
-                str.append(": ");
-                str.append(msg);
-                
-                my_logger_lock.lock();
-                my_logger->write_to_file(str);
-                my_logger_lock.unlock();
-                
-                sender.send_msg(vm_hosts[successors[i]], msg);
-            }
-            if(predecessors[i] >= 0 && predecessors[i] != my_id){
-                string str("Send HB to VM ");
-                str.append(to_string(predecessors[i]));
-                str.append(": ");
-                str.append(msg);
-                
-                my_logger_lock.lock();
-                my_logger->write_to_file(str);
-                my_logger_lock.unlock();
-                sender.send_msg(vm_hosts[predecessors[i]], msg);
+        isJoin_lock.lock();
+        if(isJoin == false){
+            isJoin_lock.unlock();
+            return;
+        }
+        
+        isJoin_lock.unlock();
+        UDP local_udp;
+        membership_list_lock.lock();
+        hb_targets_lock.lock();
+        
+        //Send HB to all HB targets
+        for(auto it = hb_targets.begin(); it != hb_targets.end(); it++){
+            if(vm_info_map.find(*it) != vm_info_map.end()){
+                local_udp.send_msg(vm_info_map[*it].ip_addr_str, h_msg);
             }
         }
-        predecessors_lock.unlock();
-        successors_lock.unlock();
+        
+        hb_targets_lock.unlock();
+        membership_list_lock.unlock();
+        //Sleep for HB_TIME
         std::this_thread::sleep_for(std::chrono::milliseconds(HB_TIME));
     }
 }
@@ -287,163 +451,156 @@ void heartbeat_sender_handler(){
  *Return:   None
  */
 void heartbeat_checker_handler(){
-    Message local_msg;
-
     while(1){
-        mem_list_lock.lock();
-        successors_lock.lock();
-        predecessors_lock.lock();
+        isJoin_lock.lock();
+        if(isJoin == false){
+            isJoin_lock.unlock();
+            return;
+        }
+	
+        isJoin_lock.unlock();
+        membership_list_lock.lock();
+        hb_targets_lock.lock();
         time_t cur_time;
         cur_time = time (NULL);
         
-        for(int i = 0 ; i < NUM_SUC; i ++){
-            if(successors[i] >=0){
-                if(membership_list[successors[i]].vm_status == ALIVE){
-                    int temp;
-                    if((((temp = cur_time - membership_list[successors[i]].vm_heartbeat)) > HB_TIMEOUT) &&
-                       (membership_list[successors[i]].vm_heartbeat != 0) ){
-                        membership_list[successors[i]].vm_status = DEAD;
-                        
-                        int last_hb =  membership_list[successors[i]].vm_heartbeat;
-                        membership_list[successors[i]].vm_heartbeat = 0;
-                        
-                        //WRITE TO FILE THAT THIS IS DEAD!!
-                        string str("VM");
-                        str.push_back((char)(successors[i] + '0'));
-                        str.append("with time stamp ");
-                        str.append(membership_list[successors[i]].vm_time_stamp);
-                        str.append(" Leave: ");
-                        str.append("Last HB: ");
-                        str.append(to_string(last_hb));
-                        str.append(" : ");
-                        str.append(to_string(temp));
-                        str.push_back('\n');
-                        
-                        my_logger_lock.lock();
-                        my_logger->write_to_file(str);
-                        my_logger_lock.unlock();
-                        int fail_vm_id = successors[i];
-                        string fail_vm_ts =membership_list[successors[i]].vm_time_stamp;
-                        
-                        //Update successors
-                        local_msg.update_pre_successor(true);
-                        
-                        //SEND MSG TO OTHER VMS
-                        string l_msg = local_msg.create_L_msg(fail_vm_id, fail_vm_ts);
-                        Gossiper my_gossiper;
-                        my_gossiper.send_Gossip(l_msg, true);
-                        
-                        //Logging
-                        string memlist_str("Current Membership List: ");
-                        for(int i = 0 ; i < NUM_VMS; i++){
-                            if(membership_list[i].vm_status == ALIVE){
-                                memlist_str.append(to_string(i));
-                                memlist_str.push_back(' ');
-                            }
-                        }
-                        memlist_str.push_back('\n');
-                        my_logger_lock.lock();
-                        my_logger->write_to_file(memlist_str);
-                        my_logger_lock.unlock();
-                    }
-                }
-            }
-            if(predecessors[i] >=0){
-                if(membership_list[predecessors[i]].vm_status == ALIVE){
-                    int temp;
-
-                    if((((temp =cur_time - membership_list[predecessors[i]].vm_heartbeat)) > HB_TIMEOUT) &&
-                       (membership_list[predecessors[i]].vm_heartbeat != 0) ){
-                        membership_list[predecessors[i]].vm_status = DEAD;
-                        
-                        
-                        int last_hb =  membership_list[successors[i]].vm_heartbeat;
-
-                        
-                        membership_list[predecessors[i]].vm_heartbeat = 0;
-
-                        //WRITE TO FILE THAT THIS IS DEAD!!
-                        string str("VM");
-                        str.push_back((char)(predecessors[i] + '0'));
-                        str.append("with time stamp ");
-                        str.append(membership_list[predecessors[i]].vm_time_stamp);
-                        str.append(" Leave: ");
-                        str.append("Last HB: ");
-                        str.append(to_string(last_hb));
-                        str.append(" : ");
-                        str.append(to_string(temp));
-                        str.push_back('\n');
-                        
-                        my_logger_lock.lock();
-                        my_logger->write_to_file(str);
-                        my_logger_lock.unlock();
-                        
-                        int fail_vm_id = predecessors[i];
-                        string fail_vm_ts =membership_list[predecessors[i]].vm_time_stamp;
-                        
-                        //Update Precessors
-                        local_msg.update_pre_successor(true);
-                        
-                        //SEND MSG TO OTHER VMS
-                        string l_msg = local_msg.create_L_msg(fail_vm_id, fail_vm_ts);
-                        Gossiper my_gossiper;
-                        my_gossiper.send_Gossip(l_msg, true);
-                        
-                        
-                        //Logging
-                        string memlist_str("Current Membership List: ");
-                        for(int i = 0 ; i < NUM_VMS; i++){
-                            if(membership_list[i].vm_status == ALIVE){
-                                memlist_str.append(to_string(i));
-                                memlist_str.push_back(' ');
-                            }
-                        }
-                        memlist_str.push_back('\n');
-                        my_logger_lock.lock();
-                        my_logger->write_to_file(memlist_str);
-                        my_logger_lock.unlock();
+        for(auto it = hb_targets.begin(); it != hb_targets.end(); it++){
+            std::unordered_map<int,VM_info>::iterator dead_vm_it;
+            if((dead_vm_it = vm_info_map.find(*it)) != vm_info_map.end()){
+                //If current time - last hearbeat > HB_TIMEOUT, mark the VM as dead and send gossip to other VM
+                if(cur_time - vm_info_map[*it].heartbeat > HB_TIMEOUT && vm_info_map[*it].heartbeat != 0){
+                    VM_info dead_vm = vm_info_map[*it];
+                    vm_info_map.erase(dead_vm_it);
+                    membership_list.erase(*it);
+                    cout << "Failure Detected: VM id: " << dead_vm.vm_num << " --- ip: "<< dead_vm.ip_addr_str << " --- ts: "<<dead_vm.time_stamp
+                    << " --- Last HB: " << dead_vm.heartbeat << "--- cur_time:  " << cur_time << "\n";
+                    
+                    hb_checker_log << "Failure Detected: VM id: " << dead_vm.vm_num << " --- ip: "<< dead_vm.ip_addr_str << " --- ts: "<<dead_vm.time_stamp
+                    << " --- Last HB: " << dead_vm.heartbeat << "--- cur_time:  " <<= cur_time;
+                    print_membership_list();
+                    update_hb_targets(true);
+                    if(membership_list.size() > 1){
+                    Protocol p;
+                    p.gossip_msg(p.create_L_msg(dead_vm.vm_num), true);
                     }
                 }
             }
         }
-        
-        predecessors_lock.unlock();
-        successors_lock.unlock();
-        mem_list_lock.unlock();
-    }
-}
-
-/* This is thread handler wait for user input to close file before Ctrl+C
- *Input:    None
- *Return:   None
- */
-void user_input_handler(){
-    while(1){
-        string input;
-        cin >> input;
-        if(strncmp(input.c_str(), "quit", 4) == 0){
-            my_logger_lock.lock();
-            my_logger->close_log_file();
-            my_logger_lock.unlock();
-        }
+        hb_targets_lock.unlock();
+        membership_list_lock.unlock();
     }
 }
 
 int main(){
-    init_machine();
-    cout <<"Successfully Initialize\n";
-    std::thread listener_thread(listener_thread_handler);
-    std::thread heartbeat_sender_thread(heartbeat_sender_handler);
-    std::thread heartbeat_checker_thread(heartbeat_checker_handler);
-    std::thread user_input_thread(user_input_handler);
+    isJoin = false;
+    
+    std::thread listener_thread;
+    std::thread heartbeat_sender_thread;
+    std::thread heartbeat_checker_thread;
+    cout << "Type JOIN to join the system!\n";
+    cout << "Type QUIT to stop the system!\n";
+    cout << "Type ML to print membership list\n";
+    cout << "Type MyVM to print this VM's information\n";
+    cout << "-----------------------------\n";
+    
+    //Main while Loop
+    while(1){
+        string input;
+        cin >> input;
+        if(strncmp(input.c_str(), "JOIN", 4) == 0){ //Join the system
+            isJoin_lock.lock();
+            //If user want to join the system
+            if(isJoin == true){
+                cout << "VM is running!!!\n";
+                isJoin_lock.unlock();
+                continue;
+            }
+            isJoin = true;
+            isJoin_lock.unlock();
+            
+            //Initialize the VM
+            init_machine();
+            cout <<"-----------Successfully Initialize-----------\n";
+            cout << "My VM info: id: " << my_vm_info.vm_num << " --- ip: "<< my_vm_info.ip_addr_str << " --- ts: "<<my_vm_info.time_stamp<<"\n";
+            print_membership_list();
+            //Start all threads
+            listener_thread = std::thread(listener_thread_handler);
+            heartbeat_sender_thread = std::thread(heartbeat_sender_handler);
+            heartbeat_checker_thread = std::thread(heartbeat_checker_handler);
+	   }
+        else if(strncmp(input.c_str(), "QUIT", 4) == 0){    //Quit program
+            isJoin_lock.lock();
+            if(isJoin == false){
+                cout << "VM is NOT running!!!\n";
+                isJoin_lock.unlock();
+                continue;
+            }
+            //Set flag to false to stop all threads
+            isJoin = false;
+            
+            cout <<"Quitting the Program..\n";
+            isJoin_lock.unlock();
+            
+            Protocol p;
+            UDP udp;
+            membership_list_lock.lock();
+            hb_targets_lock.lock();
+            
+            //Send msg to notify other VM before quitting
+            string t_msg = p.create_T_msg();
+            for(auto it = hb_targets.begin(); it != hb_targets.end(); it++){
+                udp.send_msg(vm_info_map[*it].ip_addr_str, t_msg);
+            }
+            p.gossip_msg(p.create_Q_msg(), true);
+            hb_targets_lock.unlock();
+            membership_list_lock.unlock();
+            break;
+        }
+        else if(strncmp(input.c_str(), "ML", 2) == 0){            //Print membershiplist
+            isJoin_lock.lock();
+            if(isJoin == false){
+                cout << "VM is NOT running!!!\n";
+                isJoin_lock.unlock();
+                continue;
+            }
 
-    listener_thread.join();
-    heartbeat_sender_thread.join();
-    heartbeat_checker_thread.join();
-    user_input_thread.join();
+            isJoin_lock.unlock();
+            membership_list_lock.lock();
+            print_membership_list();
+            membership_list_lock.unlock();
+        }
+        else if(strncmp(input.c_str(), "MyVM", 4) == 0){            //Print VM info
+            isJoin_lock.lock();
+            if(isJoin == false){
+                cout << "VM is NOT running!!!\n";
+                isJoin_lock.unlock();
+                continue;
+            }
+
+            cout << "My VM info: id: " << my_vm_info.vm_num << " --- ip: "<< my_vm_info.ip_addr_str << " --- ts: "<<my_vm_info.time_stamp<<"\n";
+            isJoin_lock.unlock();
+        }
+    }
+
+     cout << "Quit Successfully\n";
+    
+    //Wait for all other threads to stop
+     listener_thread.join();
+     heartbeat_sender_thread.join();
+     heartbeat_checker_thread.join();
+    
+    my_logger.write_to_file("vm_log");
+    
     
     return 0;
 }
+
+
+
+
+
+
+
 
 
 

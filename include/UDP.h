@@ -1,15 +1,16 @@
 //
-//  UDP_Client.h
+//  UDP.hpp
 //  
 //
-//  Created by Hieu Huynh on 9/25/17.
-//
+//  Created by Hieu Huynh on 10/7/17.
 //
 
-#ifndef UDP_Client_h
-#define UDP_Client_h
+#ifndef UDP_hpp
+#define UDP_hpp
+
+#include <stdio.h>
 #include "common.h"
-
+using namespace std;
 
 typedef std::chrono::high_resolution_clock clk;
 typedef std::chrono::time_point<clk> timepnt;
@@ -20,20 +21,20 @@ typedef std::chrono::nanoseconds unit_nanoseconds;
 
 
 using namespace std;
-class UDP_Client{
+class UDP{
 private:
     char msg_buf[1024];
-    int msg_buf_idx;
-    queue<string> msg_q;
+    int msg_buf_idx;        
+    queue<string> msg_q;    //Message queue
     
 public:
-    UDP_Client();
+    UDP();
     string read_msg_non_block(int time_out);
     string receive_msg();
     void getlines_(int fd);
     vector<string> buf_to_line(char* buf, int buf_size);
+    void send_msg(string dest_addr, string msg);
 
+    
 };
-
-#endif /* UDP_Client_h */
-
+#endif /* UDP_hpp */
