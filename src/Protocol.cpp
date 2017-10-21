@@ -187,7 +187,7 @@ void Protocol::handle_J_msg(string msg){
         vm_info_map[sender_id] = new_vm;
         cout <<"VM with id: " << new_vm.vm_num << " JOIN.";
         protocol_log << "VM with id: " << new_vm.vm_num <<= " JOIN.";
-        print_membership_list();
+//        print_membership_list();
         
         //Gossip the msg
         Protocol p;
@@ -253,7 +253,7 @@ void Protocol::handle_N_msg(string msg, bool haveLock){
 	}
     cout << "VM with id: " << new_node_num << " JOIN.";
     protocol_log << "VM with id: " << new_node_num <<= " JOIN.";
-    print_membership_list();
+//    print_membership_list();
     
     if(haveLock == false)
         membership_list_lock.unlock();
@@ -283,7 +283,7 @@ void Protocol::handle_L_msg(string msg, bool haveLock){
     
     cout << "VM with id: " << new_node_num << " FAIL.";
     protocol_log << "VM with id: " << new_node_num <<= " FAIL.";
-    print_membership_list();
+//    print_membership_list();
     
     if(haveLock == false)
         membership_list_lock.unlock();
@@ -430,7 +430,7 @@ void Protocol::handle_Q_msg(string msg, bool haveLock){
     
     cout <<"VM with id: " << new_node_num << " VOLUNTARILY LEAVE.";
     protocol_log << "VM with id: " << new_node_num <<= " VOLUNTARILY LEAVE.";
-    print_membership_list();
+//    print_membership_list();
     
     if(haveLock == false)
         membership_list_lock.unlock();

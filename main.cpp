@@ -477,7 +477,7 @@ void heartbeat_checker_handler(){
                     
                     hb_checker_log << "Failure Detected: VM id: " << dead_vm.vm_num << " --- ip: "<< dead_vm.ip_addr_str << " --- ts: "<<dead_vm.time_stamp
                     << " --- Last HB: " << dead_vm.heartbeat << "--- cur_time:  " <<= cur_time;
-                    print_membership_list();
+//                    print_membership_list();
                     update_hb_targets(true);
                     if(membership_list.size() > 1){
                     Protocol p;
@@ -522,7 +522,7 @@ int main(){
             init_machine();
             cout <<"-----------Successfully Initialize-----------\n";
             cout << "My VM info: id: " << my_vm_info.vm_num << " --- ip: "<< my_vm_info.ip_addr_str << " --- ts: "<<my_vm_info.time_stamp<<"\n";
-            print_membership_list();
+//            print_membership_list();
             //Start all threads
             listener_thread = std::thread(listener_thread_handler);
             heartbeat_sender_thread = std::thread(heartbeat_sender_handler);
@@ -566,7 +566,7 @@ int main(){
 
             isJoin_lock.unlock();
             membership_list_lock.lock();
-            print_membership_list();
+//            print_membership_list();
             membership_list_lock.unlock();
         }
         else if(strncmp(input.c_str(), "MyVM", 4) == 0){            //Print VM info
