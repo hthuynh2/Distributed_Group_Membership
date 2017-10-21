@@ -566,7 +566,7 @@ int main(){
 
             isJoin_lock.unlock();
             membership_list_lock.lock();
-//            print_membership_list();
+            print_membershgip_list();
             membership_list_lock.unlock();
         }
         else if(strncmp(input.c_str(), "MyVM", 4) == 0){            //Print VM info
