@@ -1,3 +1,31 @@
 # Installation
+-------
 make workspace
 make
+
+RUNNING
+-------
+To run program: ./main
+
+Commands while running: 
+-------
+JOIN:   join the system
+QUIT:   quit the system
+ML:     Print the membership list
+MyVM:   Print the vm info
+
+
+Introduction:
+-------
+The distributed membership system maintains a dynamic membership list at each node in the system. The membership list may change over time as new nodes ask to join the group and nodes fail or voluntarily leave the group. The system can be divided into two major components: failure detection and dissemina- tion.
+
+Failure Detection:
+-------
+A ring heartbeating protocol is used to maintain awareness of the state of each node in the system. The structure of the ring is communicated by the ordering of the membership list - each node in the membership list is sorted by its identification number. Then each node’s heartbeat targets are calculated as its two predecessors and its two successors. By this ”push” method, each node sends heartbeats to its targets every HB TIME time units, a predetermined contstant.
+Each node also receives heartbeats by its four closest neighbors. If node i detects that a heartbeat has not been received from node j within HB TIMEOUT time units, it marks the node as failed. This failure is reflected in node i’s membership list immediately. Then, node i disseminates information about node j’s failure using the dissemination protocol. This algorithm scales to large N because each node has an O(1) message load and the overall network has an O(N) message load. Also, the time to detection, i.e. the time it takes for some node to detect a failure, is O(1).
+
+Dissemination
+-------
+The dissemination of a node join or leave (collectively referred to as a membership change) is performed by the Gossip protocol. When a node learns of another node’s failure, it com- municates this information to GOSSIP B randomly chosen nodes among the ones that are known to be alive. When nodes receive a gossip message, they update the membership list to reflect the changes contained in the gossip message. Duplicate gossip messages do not affect the membership list since if a membership change is already reflected, the update does not need to occur.
+Also, gossip messages must be disseminated themselves. When nodes receive a gossip mes- sage, they randomly choose another GOSSIP B nodes to relay the gossip message. This process continues for GOSSIP C × log N relays, upon which the nodes drop the message. The GOSSIP B and GOSSIP C parameters are adjusted to fit the specific network structure and minimize bandwidth but maintain a high probability of contacting all nodes eventu- ally.
+This algorithm scales to large N because each node has an O(bc log N ) message load per membership change. The total time to detection, i.e. the expected time taken to dissemi- nate the message to the whole network, is O(log N ), for suitable constant b, c.
