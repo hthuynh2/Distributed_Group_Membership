@@ -1,0 +1,14 @@
+# Installation
+-------
+make workspace
+make
+
+RUNNING
+-------
+To run program: ./main
+
+Commands while running: 
+JOIN:   join the system
+QUIT:   quit the system
+ML:     Print the membership list
+MyVM:   Print the vm info
